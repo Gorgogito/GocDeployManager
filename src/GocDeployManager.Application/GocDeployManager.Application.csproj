@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>GocDeployManager.Application</RootNamespace>
+    <AssemblyName>GocDeployManager.Application</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Deliberadamente solo Domain + Common: Application depende de abstracciones,
+         nunca de Infrastructure/Services directamente (inversión de dependencias).
+         La composición real ocurre en el proyecto UI. -->
+    <ProjectReference Include="..\GocDeployManager.Common\GocDeployManager.Common.csproj" />
+    <ProjectReference Include="..\GocDeployManager.Domain\GocDeployManager.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>GocDeployManager.Services</RootNamespace>
+    <AssemblyName>GocDeployManager.Services</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Security" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLog" Version="5.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GocDeployManager.Common\GocDeployManager.Common.csproj" />
+    <ProjectReference Include="..\GocDeployManager.Domain\GocDeployManager.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

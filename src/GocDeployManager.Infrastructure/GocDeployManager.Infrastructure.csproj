@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>GocDeployManager.Infrastructure</RootNamespace>
+    <AssemblyName>GocDeployManager.Infrastructure</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GocDeployManager.Common\GocDeployManager.Common.csproj" />
+    <ProjectReference Include="..\GocDeployManager.Domain\GocDeployManager.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

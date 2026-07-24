@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>GocDeployManager.Common</RootNamespace>
+    <AssemblyName>GocDeployManager.Common</AssemblyName>
+  </PropertyGroup>
+
+</Project>
