@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="es">
+<meta charset="utf-8">
+<title>GOC Deploy Manager — Documento de Análisis</title>
+<style>
+:root{
+  --bg:#F5F6F4;
+  --surface:#FFFFFF;
+  --surface-2:#F0F1EE;
+  --ink:#1B2130;
+  --ink-soft:#5B6472;
+  --accent:#2C6E8E;
+  --accent-soft:rgba(44,110,142,0.10);
+  --warm:#B8732E;
+  --warm-soft:rgba(184,115,46,0.10);
+  --danger:#B14343;
+  --danger-soft:rgba(177,67,67,0.08);
+  --success:#2E7D5B;
+  --success-soft:rgba(46,125,91,0.10);
+  --line:#DDE1DE;
+  --code-bg:#1E2430;
+  --code-ink:#DCE3EC;
+  --shadow: 0 1px 2px rgba(20,30,25,0.06), 0 8px 24px -12px rgba(20,30,25,0.12);
+}
+:root[data-theme="dark"]{
+  --bg:#10141C;
+  --surface:#171D28;
+  --surface-2:#1D2430;
+  --ink:#E7EAF0;
+  --ink-soft:#9DA6B8;
+  --accent:#74BFD6;
+  --accent-soft:rgba(116,191,214,0.12);
+  --warm:#E0A055;
+  --warm-soft:rgba(224,160,85,0.12);
+  --danger:#E28A8A;
+  --danger-soft:rgba(226,138,138,0.10);
+  --success:#79CBA3;
+  --success-soft:rgba(121,203,163,0.12);
+  --line:#2A3242;
+  --code-bg:#0C1017;
+  --code-ink:#D7E0EA;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10141C;
+    --surface:#171D28;
+    --surface-2:#1D2430;
+    --ink:#E7EAF0;
+    --ink-soft:#9DA6B8;
+    --accent:#74BFD6;
+    --accent-soft:rgba(116,191,214,0.12);
+    --warm:#E0A055;
+    --warm-soft:rgba(224,160,85,0.12);
+    --danger:#E28A8A;
+    --danger-soft:rgba(226,138,138,0.10);
+    --success:#79CBA3;
+    --success-soft:rgba(121,203,163,0.12);
+    --line:#2A3242;
+    --code-bg:#0C1017;
+    --code-ink:#D7E0EA;
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0;}
+.doc{
+  font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  font-size:15.5px;
+}
+.doc ::selection{background:var(--accent-soft);}
+a{color:var(--accent);}
+
+/* ---------- Header ---------- */
+.hero{
+  padding:3.2rem 2rem 2.4rem;
+  border-bottom:1px solid var(--line);
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 70%);
+}
+.hero-inner{max-width:920px;margin:0 auto;}
+.eyebrow{
+  font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+  font-size:0.78rem;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:flex;align-items:center;gap:0.6rem;
+}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--warm);display:inline-block;box-shadow:0 0 0 3px var(--warm-soft);}
+h1.title{
+  font-family:"Iowan Old Style","Sitka Text",Palatino,"Palatino Linotype",Georgia,serif;
+  font-weight:600;
+  font-size:clamp(1.7rem,3.4vw,2.5rem);
+  line-height:1.15;
+  margin:0.5rem 0 0.4rem;
+  text-wrap:balance;
+}
+.subtitle{
+  font-size:1.02rem;
+  color:var(--ink-soft);
+  max-width:60ch;
+  margin:0 0 1.4rem;
+}
+.meta-row{display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1.6rem;}
+.chip{
+  font-size:0.78rem;
+  padding:0.3rem 0.7rem;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  display:inline-flex;align-items:center;gap:0.4rem;
+}
+.chip b{color:var(--ink);font-weight:600;}
+.status-pending{
+  background:var(--warm-soft);
+  border-color:transparent;
+  color:var(--warm);
+  font-weight:600;
+}
+.exec-summary{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:1.2rem 1.4rem;
+  box-shadow:var(--shadow);
+  font-size:0.96rem;
+  color:var(--ink-soft);
+}
+.exec-summary p{margin:0.4rem 0;}
+.exec-summary strong{color:var(--ink);}
+
+/* ---------- Layout ---------- */
+.layout{
+  max-width:1180px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:250px minmax(0,1fr);
+  gap:2.4rem;
+  padding:2.2rem 2rem 5rem;
+  align-items:start;
+}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc{position:static;max-height:none;order:-1;}
+}
+nav.toc{
+  position:sticky;
+  top:1.4rem;
+  max-height:calc(100vh - 2.8rem);
+  overflow-y:auto;
+  padding-right:0.6rem;
+  font-size:0.85rem;
+}
+nav.toc .toc-label{
+  font-family:"Cascadia Code",Consolas,monospace;
+  text-transform:uppercase;
+  letter-spacing:0.07em;
+  font-size:0.72rem;
+  color:var(--ink-soft);
+  margin-bottom:0.6rem;
+}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc;}
+nav.toc li{counter-increment:toc;margin-bottom:0.15rem;}
+nav.toc li.no-count{counter-increment:none;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid var(--line);}
+nav.toc li.no-count a::before{content:"\2605";color:var(--warm);font-size:0.8rem;}
+nav.toc a{
+  display:flex;gap:0.55rem;
+  text-decoration:none;
+  color:var(--ink-soft);
+  padding:0.32rem 0.5rem;
+  border-radius:6px;
+}
+nav.toc a::before{
+  content:counter(toc,decimal-leading-zero);
+  font-family:"Cascadia Code",Consolas,monospace;
+  font-size:0.72rem;
+  color:var(--accent);
+  flex-shrink:0;
+  padding-top:0.05rem;
+}
+nav.toc a:hover{background:var(--surface-2);color:var(--ink);}
+
+main{min-width:0;}
+section{margin-bottom:2.6rem;scroll-margin-top:1.2rem;}
+section > h2{
+  font-family:"Iowan Old Style","Sitka Text",Palatino,Georgia,serif;
+  font-size:1.5rem;
+  font-weight:600;
+  display:flex;align-items:baseline;gap:0.7rem;
+  margin:0 0 0.2rem;
+  padding-bottom:0.5rem;
+  border-bottom:1px solid var(--line);
+}
+section > h2 .num{
+  font-family:"Cascadia Code",Consolas,monospace;
+  font-size:0.95rem;
+  color:var(--accent);
+  font-weight:500;
+}
+section > .lede{color:var(--ink-soft);font-size:0.95rem;margin:0.7rem 0 1.1rem;max-width:70ch;}
+h3{
+  font-size:1.05rem;
+  font-weight:650;
+  margin:1.5rem 0 0.5rem;
+  color:var(--ink);
+}
+h4{font-size:0.94rem;font-weight:650;margin:1.1rem 0 0.4rem;color:var(--ink);}
+p{max-width:72ch;}
+ul,ol{padding-left:1.3rem;max-width:70ch;}
+li{margin-bottom:0.35rem;}
+strong{font-weight:650;}
+code{
+  font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+  background:var(--surface-2);
+  padding:0.1rem 0.35rem;
+  border-radius:4px;
+  font-size:0.86em;
+  border:1px solid var(--line);
+}
+pre{
+  background:var(--code-bg);
+  color:var(--code-ink);
+  padding:1rem 1.1rem;
+  border-radius:10px;
+  overflow-x:auto;
+  font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+  font-size:0.82rem;
+  line-height:1.55;
+  box-shadow:var(--shadow);
+}
+pre code{background:none;border:none;padding:0;color:inherit;}
+
+/* tables */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);}
+table{border-collapse:collapse;width:100%;font-size:0.87rem;background:var(--surface);}
+thead th{
+  text-align:left;
+  background:var(--surface-2);
+  color:var(--ink-soft);
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  padding:0.65rem 0.9rem;
+  border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+td{padding:0.65rem 0.9rem;border-bottom:1px solid var(--line);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td.rec{color:var(--success);font-weight:650;}
+
+/* callouts */
+.callout{
+  border-radius:10px;
+  padding:0.9rem 1.1rem;
+  margin:0.9rem 0;
+  border:1px solid var(--line);
+  font-size:0.9rem;
+  max-width:74ch;
+}
+.callout .callout-label{
+  font-size:0.7rem;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  font-weight:700;
+  display:block;
+  margin-bottom:0.3rem;
+}
+.callout.risk{background:var(--danger-soft);border-color:transparent;}
+.callout.risk .callout-label{color:var(--danger);}
+.callout.improve{background:var(--success-soft);border-color:transparent;}
+.callout.improve .callout-label{color:var(--success);}
+.callout.note{background:var(--accent-soft);border-color:transparent;}
+.callout.note .callout-label{color:var(--accent);}
+.callout.decision{background:var(--warm-soft);border-color:transparent;}
+.callout.decision .callout-label{color:var(--warm);}
+
+/* risk grid */
+.risk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.9rem;margin:1rem 0;}
+.risk-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:0.9rem 1rem;box-shadow:var(--shadow);
+}
+.risk-card .sev{
+  font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:700;
+  padding:0.15rem 0.5rem;border-radius:5px;display:inline-block;margin-bottom:0.5rem;
+}
+.sev-alta{background:var(--danger-soft);color:var(--danger);}
+.sev-media{background:var(--warm-soft);color:var(--warm);}
+.sev-baja{background:var(--success-soft);color:var(--success);}
+.risk-card h4{margin:0 0 0.35rem;font-size:0.92rem;}
+.risk-card p{margin:0.2rem 0;font-size:0.85rem;color:var(--ink-soft);}
+.risk-card p b{color:var(--ink);}
+
+/* screen mock */
+.screen-mock{
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);margin:1rem 0;max-width:74ch;
+}
+.screen-mock .bar{
+  background:var(--surface-2);padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--ink-soft);
+  border-bottom:1px solid var(--line);font-family:"Cascadia Code",Consolas,monospace;
+}
+.screen-mock .body{padding:0.9rem 1rem;background:var(--surface);font-size:0.85rem;}
+.screen-mock .zone{
+  border:1px dashed var(--line);border-radius:7px;padding:0.5rem 0.7rem;margin-bottom:0.5rem;color:var(--ink-soft);
+}
+.screen-mock .zone b{color:var(--ink);display:block;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.2rem;}
+
+/* checklist */
+.qa-list{list-style:none;padding-left:0;max-width:74ch;}
+.qa-list li{
+  display:flex;gap:0.7rem;padding:0.55rem 0;border-bottom:1px solid var(--line);
+}
+.qa-list li:last-child{border-bottom:none;}
+.qa-list .q-num{
+  font-family:"Cascadia Code",Consolas,monospace;color:var(--accent);font-size:0.8rem;flex-shrink:0;padding-top:0.1rem;
+}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.8rem 0;}
+.tag{
+  font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:6px;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft);
+  font-family:"Cascadia Code",Consolas,monospace;
+}
+
+footer.doc-footer{
+  max-width:920px;margin:0 auto;padding:0 2rem 3rem;color:var(--ink-soft);font-size:0.85rem;
+}
+hr.sep{border:none;border-top:1px solid var(--line);margin:2.4rem 0;}
+</style>
+
+<div class="doc">
+  <div class="hero">
+    <div class="hero-inner">
+      <span class="eyebrow">Fase 0 · Documento de análisis — cerrado, sin implementación</span>
+      <h1 class="title">Sistema de Automatización de Despliegues GOC — SIT / IDI</h1>
+      <p class="subtitle">Propuesta arquitectónica para reemplazar el proceso manual de clonado, compilación y despliegue de correcciones (GOCs) por una aplicación de escritorio WinForms sobre .NET Framework 4.8.</p>
+      <div class="meta-row">
+        <span class="chip">Elaborado por <b>Pamela</b> — Arquitecta de Software / DevOps</span>
+        <span class="chip">Fecha <b>2026-07-23</b></span>
+        <span class="chip" style="background:var(--success-soft);color:var(--success);border-color:transparent;font-weight:600;">Fase 0 cerrada — lista para Fase 1</span>
+      </div>
+      <div class="exec-summary">
+        <p><strong>Resumen ejecutivo.</strong> Este documento no incluye código: es el análisis previo que solicitaste antes de iniciar la implementación por fases.</p>
+        <p>Cubre los 21 puntos requeridos — comprensión del problema, arquitectura en capas, biblioteca de controles propia, estrategias de compilación/despliegue/autenticación/logging/pruebas/errores — y quedan todas tus respuestas de validación incorporadas, además de hallazgos confirmados al revisar directamente los repositorios reales <code>sit-integra-web</code> e <code>idi-web</code> (ver <a href="#sec-00">Bitácora de decisiones</a>).</p>
+        <p>Recomendación general vigente: mantener el proceso de compilación por capas <em>exactamente</em> como hoy (confirmado como estructuralmente obligatorio, no solo tradición), modelar los pasos de build como configuración por sistema, generalizar la lista de exclusión de despliegue, usar SQLite para historial y usuarios, NLog para logging, login propio de aplicación con credenciales de Bitbucket por operador protegidas con DPAPI, y ambientes generalizados a N sistemas (SIT, IDI, y el próximo ProPag). Todo se detalla y justifica abajo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-label">Contenido</div>
+      <ol>
+        <li class="no-count"><a href="#sec-00">Bitácora de decisiones</a></li>
+        <li><a href="#sec-01">Comprensión del problema</a></li>
+        <li><a href="#sec-02">Análisis funcional</a></li>
+        <li><a href="#sec-03">Análisis técnico</a></li>
+        <li><a href="#sec-04">Riesgos identificados</a></li>
+        <li><a href="#sec-05">Mejoras sugeridas</a></li>
+        <li><a href="#sec-06">Arquitectura propuesta</a></li>
+        <li><a href="#sec-07">Estructura de la solución</a></li>
+        <li><a href="#sec-08">Responsabilidad por proyecto</a></li>
+        <li><a href="#sec-09">Biblioteca de controles</a></li>
+        <li><a href="#sec-10">Diseño de pantallas</a></li>
+        <li><a href="#sec-11">Flujo del despliegue</a></li>
+        <li><a href="#sec-12">Diagrama de secuencia</a></li>
+        <li><a href="#sec-13">Estrategia de compilación</a></li>
+        <li><a href="#sec-14">Estrategia de despliegue</a></li>
+        <li><a href="#sec-15">Autenticación Bitbucket</a></li>
+        <li><a href="#sec-16">Almacenamiento de config.</a></li>
+        <li><a href="#sec-17">Estrategia de logging</a></li>
+        <li><a href="#sec-18">Estrategia de pruebas</a></li>
+        <li><a href="#sec-19">Manejo de errores</a></li>
+        <li><a href="#sec-20">Optimizaciones posibles</a></li>
+        <li><a href="#sec-21">Preguntas pendientes</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="sec-00">
+        <h2 style="border-bottom:none;">Bitácora de decisiones</h2>
+        <p class="lede">Registro vivo de decisiones arquitectónicas confirmadas. Se actualiza en cada fase — no se repite una pregunta ya cerrada aquí.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Decisión</th><th>Origen</th></tr></thead>
+            <tbody>
+              <tr><td>2026-07-23</td><td>Referencias entre capas confirmadas como <code>ProjectReference</code> (verificado en <code>Sit.BusinessLayer.vbproj</code>). Build por capas es además <strong>obligatorio</strong>: <code>SITSolution</code> es un proyecto ASP.NET Web Site, que depende de tener las capas ya compiladas antes de precompilar.</td><td>Inspección directa de <code>sit-integra-web</code></td></tr>
+              <tr><td>2026-07-23</td><td>IDI compila 6 capas (<code>BussinessEntities → BussinessLogic → DataAccess → Facade → Log → Utilitario</code>) + solución raíz, distinto del orden de 3 capas de SIT. Confirma que los pasos de build deben ser configurables por sistema, no una secuencia fija en código.</td><td>Inspección de <code>idi-web/codigo/IDI/compilacion.bat</code></td></tr>
+              <tr><td>2026-07-23</td><td>Hoy <code>web.config</code> se excluye <strong>manualmente</strong> del working copy antes de correr <code>despliegue.bat</code> (los scripts actuales no tienen ninguna protección automática). La app debe automatizar exactamente esa exclusión manual.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Bitbucket usa usuario/contraseña tradicional. Se mantiene un <strong>login propio de la aplicación</strong> (gestión de usuarios), y cada usuario de la app tiene asociadas sus propias credenciales de Bitbucket.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>No se requiere bloqueo de concurrencia por ambiente: solo 2 operadores, con coordinación manual previa sobre quién despliega dónde.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Ruta de <code>MSBuild.exe</code> fija en todas las máquinas (instalación estandarizada de Visual Studio previa a la entrega).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Sin backup/rollback automático pre-copia: probabilidad de fallo de acceso a la ruta destino es baja; si ocurre, queda en el historial y se resuelve con un nuevo despliegue o intervención manual.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Un despliegue iniciado no se cancela: corre hasta el final (éxito o fallo).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Exportación de historial en Excel y PDF (ambos formatos).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Sin convención de pruebas previa en la organización → se adopta <strong>NUnit</strong> para el proyecto.</td><td>Recomendación de Pamela, aceptada</td></tr>
+              <tr><td>2026-07-23</td><td>Git garantizado en toda máquina que ejecute la app → clonado vía <code>git.exe</code> como proceso externo (misma filosofía que MSBuild).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Nombre de solución: <code>GocDeployManager</code>. Nombre de la biblioteca de controles: <code>DesktopComponents</code>, como proyecto propio y reutilizable (no acoplado al nombre del proyecto de negocio).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Laptops personales e intransferibles por operador → DPAPI (<code>CurrentUser</code>) es suficiente para proteger el secreto de Bitbucket de cada usuario de la app.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Un ambiente puede definir un solo sistema. El área evalúa incorporar un tercer sistema, <strong>ProPag</strong> (Provisión de Pagos) → el modelo de ambientes/sistemas se generaliza a N sistemas, no queda fijo en SIT/IDI.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Modo simulación ("dry-run") diferido a una fase posterior (backlog, no bloquea Fase 1).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Se usa la lista original de 3 ambientes (todos bajo <code>\\Sdpeapp00009\Aplicaciones\...</code>) como definitiva para <code>Ambientes.json</code>. El propio aplicativo GocDeployManager se pilotea primero en Desarrollo (sdpeapp00009), y luego se promueve a Testing y Producción — esto es independiente y no bloquea la carga inicial de ambientes, que además es 100% editable sin tocar código.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>ProPag confirmado con repositorio Bitbucket existente. Reutiliza literalmente los mismos nombres de proyecto/solución que SIT (<code>Sit.BusinessEntities</code>, <code>SITSolution</code>) — el catálogo de "Sistema" debe ser un identificador de negocio independiente del nombre interno de los proyectos, y las rutas de trabajo (clonado) deben aislarse por sistema para evitar colisión.</td><td>Inspección de <code>provision-pagos-web</code></td></tr>
+              <tr><td>2026-07-23</td><td>Se agrega un tercer rol de solo lectura, "Consulta", además de Administrador y Operador — puede ver el Historial pero no desplegar ni configurar.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td>Confirmado: <code>despliegue.bat</code> de ProPag tenía la ruta destino de SIT por copiar el script sin actualizar. La ruta real y correcta es <code>\\sdpeapp00009\Aplicaciones\ProvisionPagos</code>. Hoy existe un solo ambiente para ProPag; se sumarán más adelante (el modelo de N ambientes por sistema ya lo soporta sin cambios).</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-23</td><td><strong>Fase 1 iniciada.</strong> <code>GocDeployManager.Common</code> y <code>GocDeployManager.Domain</code> creados como proyectos SDK-style (<code>&lt;TargetFramework&gt;net48&lt;/TargetFramework&gt;</code>) — mismo runtime .NET Framework 4.8, solo cambia el formato del archivo de proyecto. Se agregaron entidades (<code>Sistema</code>, <code>Ambiente</code>, <code>AmbienteSistema</code>, <code>PasoDeBuild</code>, <code>SecuenciaDeBuild</code>, <code>Goc</code>, <code>AppUser</code>, <code>Despliegue</code>), las interfaces que implementará <code>Infrastructure</code>/<code>Services</code>, y <code>GocDeployManager.Domain.Tests</code> (NUnit, 25 pruebas, todas en verde). Compilado y verificado con <code>dotnet build</code> / <code>dotnet test</code>.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-23</td><td><strong>Fase 1 continuada: Infrastructure + Application (+ Services mínimo).</strong> Al construir la persistencia se confirmó que SIT, IDI y ProPag son <strong>3 repositorios Bitbucket distintos</strong> (no uno compartido) — se reemplazó <code>IBuildStepsRepository</code> por <code>ISistemaRepository</code> (URL de repo + carpeta precompilada + secuencia de build, por sistema, vía <code>Sistemas.json</code>). Se agregó <code>IExclusionRulesRepository</code> (<code>ExclusionRules.json</code>). <code>Despliegue.RegistrarExitoso/Fallido</code> ahora acepta una <code>fechaHora</code> opcional, necesaria para reconstruir registros históricos reales desde SQLite sin perder la fecha original. <code>Application</code> quedó dependiendo solo de <code>Domain</code> (no de <code>Infrastructure</code>/<code>Services</code> directamente) — la composición ocurrirá en <code>UI</code>. Implementado: <code>GitClient</code> (git.exe, credenciales por variable de entorno vía <code>GIT_ASKPASS</code>, nunca como argumento de línea de comandos), <code>MsBuildRunner</code>, <code>FileDeployer</code> (espejo con protección de excluidos), repos JSON (Ambientes/Sistemas/ExclusionRules) y SQLite (AppUser/DeployHistory), <code>Pbkdf2PasswordHasher</code>, <code>DpapiCredentialProtector</code>, y en Application: <code>AuthenticationService</code>, <code>UserManagementService</code>, <code>AmbienteManagementService</code>, <code>HistorialQueryService</code>, <code>DeploymentOrchestrator</code>. 53 pruebas en verde (25 Domain + 8 Application con Moq + 20 Infrastructure con archivos/SQLite reales en carpetas temporales). Pendiente para una fase posterior: pruebas de <code>GitClient</code>/<code>MsBuildRunner</code> contra un Bitbucket/MSBuild reales (end-to-end, sección 18).</td><td>Implementado</td></tr>
+              <tr><td>2026-07-23</td><td><strong>Fase 1 continuada: primera porción de DesktopComponents.</strong> No se construyeron los 18 controles de una vez — se priorizó la base de theming (<code>Theme</code>, <code>ThemeManager</code>, <code>IThemedControl</code>, paleta Claro/Oscuro igual a la de este documento) más los 4 controles que hacen falta para Login y pantallas de configuración: <code>ButtonX</code>, <code>TextBoxX</code>, <code>ComboBoxX</code>, <code>MetroForm</code>. Verificado visualmente (no solo compilado) con un arnés de captura de pantalla off-process, en ambos temas. Se encontró y corrigió un bug real durante esa verificación: <code>ControlStyles.UserPaint</code> deja un <code>ComboBox</code> completamente en blanco porque WinForms dejaba de invocar su dibujo nativo — a diferencia de <code>Button</code>, un <code>ComboBox</code> no soporta pintarse 100% a mano; se resolvió con <code>FlatStyle.Flat</code> + <code>OwnerDrawFixed</code> + <code>SetWindowTheme(hwnd,"","")</code> (para que Windows deje de forzar su color nativo). También se subió el contraste del borde en tema Claro (era casi invisible contra el fondo). Controles restantes (Ribbon, DataGrid moderno, Notification, etc.) se agregan en fases futuras, a medida que la pantalla que los necesita entra en juego.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-23</td><td><strong>Fase 1 continuada: segunda porción de DesktopComponents.</strong> Se agregaron <code>GroupPanel</code>, <code>ProgressBarX</code>, <code>StatusBarX</code>, <code>LoadingOverlay</code> y <code>NotificationX</code> (toast con fade in/out, se apila si llegan varias, se cierra solo o al hacer clic — evita el <code>MessageBox</code> modal bloqueante para avisar fin de despliegue). Aprendizaje del bug de <code>ComboBoxX</code> aplicado preventivamente: <code>ProgressBarX</code> y <code>StatusBarX</code> se construyeron heredando de <code>Control</code> puro, no de <code>ProgressBar</code>/<code>StatusStrip</code> nativos, para no repetir el mismo problema de theming. Verificado visualmente igual que la porción anterior (capturas reales de pantalla, ambos temas) — sin hallazgos nuevos.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: tercera porción de DesktopComponents.</strong> Se agregaron <code>SideMenu</code>, <code>Breadcrumb</code>, <code>TabControlX</code> (pestañas propias sobre <code>Panel</code>, sin envolver el <code>TabControl</code> nativo — mismo criterio de seguridad que <code>ProgressBarX</code>) y <code>MessageBoxX</code> (reemplazo de <code>MessageBox</code> con el chrome de <code>MetroForm</code>). Se agregó soporte de <code>MinimizeBox</code> a <code>MetroForm</code> para que los diálogos modales no muestren botón de minimizar.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Incidente de seguridad durante la verificación visual, resuelto.</strong> El arnés de previsualización usaba <code>Graphics.CopyFromScreen</code> para capturar pantallas reales; al ejecutarse sobre el escritorio real del usuario (en uso activo, no un sandbox aislado), una captura llegó a incluir contenido ajeno a la aplicación (una ventana real del usuario) porque el z-order/foco de una ventana de prueba no está garantizado en un entorno interactivo real. Se detectó, se borró el archivo de inmediato sin describir su contenido más allá de lo necesario para diagnosticar, y se eliminó <code>CopyFromScreen</code> del arnés de forma permanente — de ahora en más, toda verificación visual de <code>DesktopComponents</code> usa exclusivamente <code>Control.DrawToBitmap</code> (renderiza solo el control indicado, nunca la pantalla real).</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: cuarta y última porción de DesktopComponents — completos los 18 controles del diseño original.</strong> Se agregaron <code>RibbonBar</code> (franja de acciones, contenedor propio como SideMenu), <code>DataGridX</code> y <code>PropertyGridX</code> (temizados vía sus propiedades de color nativas — a diferencia de ComboBox, ambos están diseñados por Microsoft para re-colorearse por completo sin trucos), y <code>TreeViewX</code>/<code>ListViewX</code> (mismo patrón <code>SetWindowTheme</code> + OwnerDraw que resolvió el bug de ComboBoxX).</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug sistémico encontrado y corregido: fuga de memoria + riesgo de excepción en los 17 controles ya construidos.</strong> Ninguno se desuscribía de <code>ThemeManager.TemaCambiado</code> al destruirse; un control descartado seguía referenciado por el evento estático, y el siguiente cambio de tema podía lanzar excepción sobre su handle ya destruido (se reprodujo en vivo con <code>DataGridX</code>). Se corrigió con una clase auxiliar reutilizable (<code>SuscripcionTema</code>) aplicada a los 18 controles y a <code>MetroForm</code>.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido en <code>ListViewX</code>.</strong> <code>DrawListViewSubItemEventArgs.ItemState</code> reportaba <code>Selected</code> para todas las filas sin importar la selección real (limitación documentada de WinForms) — se corrigió usando <code>e.Item.Selected</code>, la fuente confiable. También se corrigió que el encabezado dejaba un hueco sin pintar más allá de la última columna (se agregó <code>EstirarUltimaColumna()</code>).</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: arranca UI — pantalla de Login funcional de punta a punta.</strong> Creado <code>GocDeployManager.UI</code> (composition root): <code>Bootstrapper</code> (lee rutas desde <code>App.config</code>, arma Infrastructure/Services/Application reales), <code>Program.cs</code> (manejo de excepciones globales) y <code>LoginForm</code> — con el flujo de primer arranque (crear administrador inicial si la base está vacía) integrado en la misma pantalla. Verificado de punta a punta contra SQLite real: primer arranque, validación de contraseñas, alta de usuario, notificación no bloqueante, credenciales inválidas (mensaje genérico) y login exitoso.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido: texto largo en <code>MetroForm.Text</code> se superponía en la barra de título.</strong> <code>TextRenderer.DrawText</code> hace ajuste de línea por defecto; sin <code>SingleLine</code>/<code>EndEllipsis</code>, un título más largo que el ancho disponible se veía ilegible/superpuesto dentro de la franja angosta de la barra. Se agregó <code>SingleLine | EndEllipsis</code> de forma preventiva en los <code>TextRenderer.DrawText</code> de todos los controles con texto en una caja de tamaño fijo (<code>ButtonX</code>, <code>GroupPanel</code>, <code>ComboBoxX</code>, <code>SideMenu</code>, <code>StatusBarX</code>, <code>TabControlX</code>, <code>TreeViewX</code>, <code>ListViewX</code>, título de <code>NotificationX</code>).</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido en <code>LoginForm</code>: la etiqueta de título propia se superponía con la barra de título de <code>MetroForm</code>.</strong> Se ubicó un <code>Label</code> en y=16, dentro de la franja 0–36 que <code>MetroForm</code> reserva para su propio título — se veía como el mismo texto garabateado descrito arriba, pero la causa real era de layout (superposición de dos textos), no de truncado. Corregido desplazando todo el contenido de <code>LoginForm</code> a partir de y=48.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: <code>MainForm</code> — pantalla principal de despliegue, funcional de punta a punta.</strong> <code>SideMenu</code> (Principal/Configuración/Historial — estas últimas dos muestran "disponible en una fase posterior" vía <code>NotificationX</code> en vez de fallar), <code>RibbonBar</code> (GOC, ambiente, checkboxes de sistema dinámicos según lo que soporte el ambiente elegido, botón de despliegue), grupo de progreso (etapa actual + <code>ProgressBarX</code> con animación tipo pulso, ya que el orquestador no expone un porcentaje real), <code>ListViewX</code> como log en tiempo real, <code>StatusBarX</code> y <code>LoadingOverlay</code> durante la ejecución. El despliegue corre en segundo plano (<code>Task.Run</code> + <code>IProgress&lt;string&gt;</code>) para no congelar la UI; mientras corre, GOC/ambiente/sistemas/botón quedan deshabilitados (no se admite cancelar ni disparar dos despliegues a la vez). <code>LoginForm</code> ahora navega a <code>MainForm</code> tras un login exitoso. Verificado de punta a punta: validación de formato de GOC, checkboxes dinámicos por ambiente, y una corrida real de despliegue que falla limpio (sin tocar red/Git/MSBuild) porque <code>Sistemas.json</code> aún no existe — confirma que el orquestador resuelve configuración antes de cualquier operación costosa.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Mismo bug de superposición de título, encontrado dos veces más dentro de <code>MainForm</code>.</strong> Los hijos de <code>GroupPanel</code> (checkboxes de sistemas, etiqueta de etapa y <code>ProgressBarX</code>) se posicionaban con <code>Location</code> absoluto ignorando la banda de título del panel — <code>GroupPanel.Padding.Top</code> existe exactamente para esto, pero no se aplica solo en hijos no acoplados (no-Dock). Corregido usando <code>grupo.Padding.Top</code> al posicionar. Lección ya anotada para toda pantalla futura que use <code>GroupPanel</code>.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: <code>ConfiguracionForm</code> — pestaña Ambientes, primera pantalla CRUD completa.</strong> <code>Breadcrumb</code> ("Configuración › Ambientes") + <code>TabControlX</code> (una sola pestaña por ahora; Bitbucket/Usuarios/General se agregan como pestañas nuevas del mismo formulario en fases siguientes) + <code>DataGridX</code> (lista de ambientes) + <code>PropertyGridX</code> (alta/edición). Para editar la colección de sistemas por ambiente se usa el editor de colecciones nativo de <code>PropertyGrid</code> sobre un DTO simple (<code>AmbienteEditable</code>/<code>AmbienteSistemaEditable</code>) — cero código adicional para agregar/quitar sistemas. <code>MainForm</code> ahora abre esta pantalla de verdad desde "Configuración" en el <code>SideMenu</code> (antes mostraba solo un aviso de "próximamente"). Verificado de punta a punta contra <code>Ambientes.json</code> real: selección que puebla el PropertyGrid, alta con validación (nombre vacío, sin sistemas), guardado exitoso con notificación, y eliminación con confirmación modal.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido: el <code>PropertyGridX</code> quedaba vacío al abrir la pantalla.</strong> <code>DataGridView</code> selecciona automáticamente la primera fila al cargar datos, pero no dispara <code>SelectionChanged</code> para esa selección inicial — el usuario tenía que cambiar de fila manualmente para que apareciera algo en el panel de edición. Corregido poblando el <code>PropertyGridX</code> explícitamente justo después de cargar las filas, sin depender solo del evento.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Mejora de UX: mensajes de validación más claros al guardar un ambiente.</strong> La primera versión dejaba pasar la excepción cruda de Domain ("El valor no puede estar vacío.") sin decir a qué campo se refería. Se agregaron validaciones explícitas previas ("El nombre del ambiente es obligatorio.", "Agrega al menos un sistema...") antes de intentar construir el objeto de dominio.</td><td>Mejorado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: <code>ConfiguracionForm</code> — pestaña Bitbucket agregada.</strong> Como <code>ISistemaRepository</code> solo tenía lectura (lo que bastaba para el orquestador), se le agregaron <code>ObtenerTodasLasConfiguraciones()</code> y <code>Guardar(...)</code> (con respaldo con timestamp, igual que Ambientes), y un <code>SistemaManagementService</code> nuevo en Application siguiendo el mismo patrón que <code>AmbienteManagementService</code>. La pestaña edita <code>Sistemas.json</code> completo por sistema: URL de repositorio, carpeta precompilada y pasos de build — estos últimos como una colección anidada dentro de otra (<code>ConfiguracionSistemaEditable.Pasos</code>), que el editor nativo de <code>PropertyGrid</code> maneja sin código adicional al recursar sobre el ítem seleccionado. El breadcrumb ahora cambia dinámicamente según la pestaña activa (<code>TabControlX.PaginaCambiada</code>). Verificado de punta a punta contra <code>Sistemas.json</code> real: selección, validación (código/URL/carpeta/pasos obligatorios), guardado con notificación, alta de un segundo sistema.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: <code>ConfiguracionForm</code> — pestaña Usuarios agregada, distinta al patrón de las dos anteriores.</strong> A diferencia de Ambientes/Bitbucket (PropertyGrid + Guardar reemplaza la lista completa), Usuarios tiene operaciones sensibles con métodos propios ya existentes en <code>UserManagementService</code> (contraseña, credenciales de Bitbucket) que nunca deben quedar expuestas como texto libre editable. Se construyeron 3 diálogos dedicados — <code>NuevoUsuarioDialog</code>, <code>ResetearContrasenaDialog</code>, <code>CredencialesBitbucketDialog</code> — más la grilla principal con acciones explícitas (cambiar rol, activar/desactivar, resetear contraseña, configurar Bitbucket). De paso se cerró un hueco real de permisos: cualquier usuario podía abrir "Configuración" desde <code>MainForm</code> sin importar su rol; ahora se valida <code>PuedeAdministrar</code> antes de abrir la pantalla. Verificado de punta a punta contra SQLite real: alta de usuario, cambio de rol, activar/desactivar, credenciales de Bitbucket.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 continuada: <code>ConfiguracionForm</code> — pestaña General agregada, completa las 4 pestañas del diseño original.</strong> Expone y permite editar las 5 rutas que pide el análisis (clonado, temporales, logs, configuración, historial) — <code>RutaLogs</code> no existía todavía en <code>Bootstrapper</code> (el logging con NLog sigue diferido) pero se agregó igual porque el campo de configuración en sí no depende de que el logging ya esté conectado. MSBuild/Git quedan fuera de esta pantalla a propósito: son fijos, confirmados en Fase 0. Guardar escribe de verdad en <code>App.config</code> vía <code>ConfigurationManager.OpenExeConfiguration(...).Save(...)</code> — se confirmó leyendo el archivo de vuelta tras guardar, no solo el estado en memoria. Como el <code>Bootstrapper</code> ya construyó Infrastructure con las rutas viejas (son parámetros de constructor, inmutables), los cambios se avisan explícitamente como aplicables recién al reiniciar la aplicación, sin ofrecer un reinicio en caliente (menor alcance, evita la complejidad/riesgo de reconstruir toda la composición con la app y sus ventanas ya abiertas).</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Fase 1 completada: <code>HistorialForm</code> — última pantalla del diseño original.</strong> Filtros (GOC, ambiente, sistema, resultado, rango de fechas) sobre <code>DataGridX</code>, detalle de solo lectura vía <code>DetalleDespliegueDialog</code> + <code>PropertyGridX</code>, y exportación real a Excel (<code>ClosedXML</code>) y PDF (<code>PdfSharp</code>, reporte de texto paginado) — ambos formatos confirmados con el cliente en Fase 0. <code>MainForm</code> ahora abre esta pantalla de verdad desde el <code>SideMenu</code> (antes mostraba "próximamente"). Verificado de punta a punta contra SQLite real (3 despliegues sembrados): filtro por GOC exacto, filtro por resultado, limpiar filtros, apertura del detalle modal, y exportación real a <code>.xlsx</code>/<code>.pdf</code> con verificación de que el archivo existe y pesa &gt; 0 bytes.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug de compilación en <code>HistorialForm</code>: método inexistente en <code>DataGridX</code>.</strong> Se llamó por error a <code>EstirarUltimaColumna()</code> sobre la grilla — ese método existe en <code>ListViewX</code> (agregado para tapar un hueco de encabezado propio de su modelo owner-draw), no en <code>DataGridX</code>, que ya resuelve el estiramiento de columnas de forma nativa vía <code>AutoSizeColumnsMode.Fill</code> configurado en su constructor. Corregido eliminando la llamada.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido en <code>HistorialForm</code>: la etiqueta de estado ("N despliegue(s) encontrado(s)") quedaba invisible, fuera del área visible.</strong> Se le había puesto <code>Anchor = Top | Right</code> para que se mantuviera pegada al borde derecho, pero se agregó como hijo de <code>RibbonBar</code> (barraAcciones) <em>antes</em> de que ese <code>RibbonBar</code> fuera agregado al formulario — en ese momento su ancho todavía era el de un <code>Control</code> recién creado (no el ancho final de 1040px), así que WinForms calculó la distancia al borde derecho contra ese ancho chico. Al acoplarse luego el <code>RibbonBar</code> con <code>Dock=Top</code> y estirarse a todo el ancho del formulario, el <em>anchor</em> reposicionó la etiqueta muy por fuera del área visible. Como este formulario no cambia de tamaño, se corrigió quitando el <code>Anchor</code> y dejando una posición absoluta calculada una sola vez contra <code>ClientSize.Width</code>. Lección: <code>Anchor</code> sobre un control hijo de un contenedor con <code>Dock</code> propio solo es seguro si se aplica <em>después</em> de que ese contenedor ya esté acoplado a su padre final.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Pruebas end-to-end reales de <code>GitClient</code> y <code>MsBuildRunner</code> (sección 18 del análisis, pendiente desde Fase 1).</strong> En vez de un repo git sintético, se usó como origen de clonado (solo lectura) el repo real <code>sit-integra-web</code> — clonar solo lee el historial ya commiteado, nunca toca el working tree (que tenía cambios locales sin commitear en <code>.dll</code>/<code>.pdb</code> trackeados; se confirmó con <code>git status</code> antes y después que quedó idéntico). Cubierto con <code>git.exe</code> y <code>MSBuild.exe</code> reales: clonado desde cero, actualización de un destino ya clonado (fetch+checkout+reset --hard), fallo real por rama inexistente, y compilación real de las 3 capas de SIT (<code>Sit.BusinessEntities → Sit.DataAccessLayer → Sit.BusinessLayer</code>) en el mismo orden que <code>compilacion.bat</code>, confirmando los <code>.dll</code> reales generados. El mecanismo de credenciales (<code>GIT_ASKPASS</code>) se verificó de forma aislada — invocando directamente el script real que genera <code>GitClient</code> con los mismos argumentos que git le pasaría — para no tener que manejar un secreto real de Bitbucket en una prueba automatizada. Estas pruebas quedaron marcadas <code>[Explicit]</code> + <code>[Category("Real")]</code> en NUnit: no corren con <code>dotnet test</code> normal (dependen de rutas específicas de esta máquina y tardan ~45s), se ejecutan a propósito con <code>dotnet test --filter TestCategory=Real</code>. La suite normal se mantiene en 53 pruebas verdes.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Logging con NLog conectado (sección 14 del análisis, pendiente desde la pestaña General de <code>ConfiguracionForm</code>).</strong> Alcance acotado a pedido del cliente: solo archivo rotativo para auditoría técnica en esta fase — se descartó a propósito el <em>target</em> custom hacia el <code>ListViewX</code> de <code>MainForm</code> que sugería el análisis original, porque ese ListView ya se llena en vivo vía <code>IProgress&lt;string&gt;</code> (funciona bien, verificado en la fase de MainForm) y agregar un segundo mecanismo para lo mismo hubiera sido duplicar sin necesidad. Nueva abstracción <code>IAppLogger</code> en <code>Domain.Abstractions</code> (mismo patrón de inversión de dependencias que <code>IGitClient</code>/<code>IMsBuildRunner</code>), implementada como <code>NLogAppLogger</code> en <code>Services</code>. <code>NLog.config</code> queda con <code>autoReload="true"</code> (recargable en caliente, sin reiniciar la app) y target de archivo asíncrono con rotación diaria — pero la ruta real del log sigue viniendo de <code>Bootstrapper.RutaLogs</code> (inyectada como variable de NLog en runtime), para no bifurcar la fuente de verdad de rutas que ya usan Ambientes/Sistemas/BD. Se instrumentó <code>DeploymentOrchestrator</code> (inicio, éxito, fallo de cada despliegue) y <code>AuthenticationService</code> (login exitoso/rechazado, sin loguear nunca contraseñas) y <code>Program.cs</code> (excepciones no manejadas, antes solo se mostraban en un <code>MessageBox</code> sin dejar rastro). Verificado con archivo real (no mockeado) en <code>NLogAppLoggerTests</code> y de punta a punta a través del propio <code>Bootstrapper</code> con el arnés de Preview: intento de login con usuario inexistente → aparece de verdad en <code>RutaLogs\goc-deploy-AAAA-MM-DD.log</code> con el mensaje esperado.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido al escribir las pruebas de <code>NLogAppLogger</code>: <code>LogManager.Shutdown()</code> en el <code>TearDown</code> rompía las pruebas siguientes.</strong> NLog busca <code>NLog.config</code> junto al ejecutable una sola vez por proceso; tras un <code>Shutdown()</code> esa configuración queda en <code>null</code> y no se vuelve a cargar sola, así que la siguiente prueba fallaba con "No se encontró NLog.config" aunque el archivo seguía ahí. Corregido dejando solo <code>LogManager.Flush()</code> en el <code>TearDown</code> (alcanza para vaciar la cola asíncrona antes de leer el archivo), sin apagar el logging entre pruebas.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Logging de cambios de rol en la pestaña Usuarios.</strong> <code>UserManagementService.CambiarRol</code> ahora recibe <code>IAppLogger</code> (mismo patrón que <code>AuthenticationService</code>/<code>DeploymentOrchestrator</code>) y deja rastro del rol anterior y el nuevo cada vez que un administrador cambia el rol de un usuario — trazabilidad de seguridad, sin tocar el resto de los métodos del servicio (alta, reseteo de contraseña, credenciales de Bitbucket, activar/desactivar quedan fuera de este pedido puntual). Verificado con <code>Mock&lt;IAppLogger&gt;</code> y de punta a punta a través de la pantalla real: alta de usuario, clic en el botón real "Guardar rol" de la pestaña Usuarios, y confirmación de que la línea aparece de verdad en <code>RutaLogs\goc-deploy-AAAA-MM-DD.log</code>.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Logging al resetear contraseña en la pestaña Usuarios.</strong> <code>UserManagementService.ResetearContrasena</code> deja rastro de qué usuario fue reseteado — <strong>nunca la contraseña nueva</strong>, ni en claro ni hasheada. Verificado con mock (incluyendo un assert explícito de que el mensaje logueado no contiene la contraseña en texto plano) y de punta a punta a través del diálogo real <code>ResetearContrasenaDialog</code>: alta de usuario, reseteo desde el diálogo real, y confirmación en <code>RutaLogs\goc-deploy-AAAA-MM-DD.log</code> de que la línea existe y no contiene la contraseña. De paso se generalizó el helper <code>EjecutarConDialogoModal</code> del arnés de Preview: antes buscaba un <code>Form</code> por nombre de tipo hardcodeado (quedó de la verificación de <code>DetalleDespliegueDialog</code> en Historial) y colgó el proceso al reusarlo para este diálogo distinto; ahora detecta genéricamente cualquier <code>Form</code> nuevo en <code>Application.OpenForms</code> que no estuviera abierto antes de disparar la acción.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real reportado por el cliente al desplegar en una segunda máquina (con acceso real a Bitbucket y a la ruta de despliegue de Desarrollo): la pantalla de alta del primer administrador tiene 4 textbox sin ningún label que indique qué va en cada uno.</strong> Causa raíz: <code>TextBoxX</code> (control base usado en toda la app) no tiene un <code>Label</code> propio — el texto que se ve dentro de un campo vacío es solo un <em>placeholder fantasma</em> (<code>TextoMarcador</code>) que <code>TextBoxX.OnPaint</code> dibuja únicamente cuando el campo está vacío <strong>y no tiene foco</strong>. Esto es invisible en dos escenarios reales: (1) el campo que tiene el foco en un momento dado nunca muestra su propio placeholder, y (2) una vez que el usuario escribe algo y sigue al siguiente campo, ese placeholder no vuelve a aparecer aunque el campo quede vacío después — en "Contraseña" vs "Confirmar contraseña" esto es especialmente grave porque ambos se ven idénticos (máscara de puntos) sin ninguna forma de distinguirlos. No se detectó en la verificación visual original porque el arnés de captura (<code>DrawToBitmap</code>) nunca le da foco real a ningún control — todas las capturas anteriores mostraban los placeholders "por casualidad", nunca en el escenario real de uso interactivo que sí disparó el cliente. Consultado el alcance del fix, el cliente eligió revisarlo en toda la app (no solo en Login), ya que es un defecto de diseño del control base. Se agregaron <code>Label</code> persistentes (no placeholders) en los 6 archivos que usan <code>TextBoxX</code> con <code>TextoMarcador</code>: <code>LoginForm</code>, <code>NuevoUsuarioDialog</code>, <code>ResetearContrasenaDialog</code>, <code>CredencialesBitbucketDialog</code>, y en <code>HistorialForm</code>/<code>MainForm</code> (estos dos con el campo GOC dentro de un <code>RibbonBar</code> — ahí el label va al costado, no arriba, siguiendo el flujo horizontal propio del ribbon). Verificado dándole foco real al primer campo tras <code>Show()</code> (a diferencia del resto de las verificaciones de este proyecto) para reproducir exactamente el escenario reportado — confirmado que el label ahora es visible incluso con el campo enfocado. Al ampliar el ancho de <code>MainForm</code> con las dos etiquetas nuevas del ribbon ("GOC:", "Ambiente:") se encontró y corrigió un efecto colateral real: el botón "Iniciar despliegue" quedaba cortado por falta de ancho (<code>ClientSize.Width</code> pasó de 760 a 900); lo mismo con el botón "Crear" de <code>NuevoUsuarioDialog</code> (5 campos, no 4 — <code>ClientSize.Height</code> pasó de 480 a 540).</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Primer despliegue real de punta a punta confirmado por el cliente</strong> en su laptop de la empresa, con acceso real a Bitbucket y a la ruta de red de Desarrollo. Sin bloqueantes.</td><td>Confirmado por el cliente</td></tr>
+              <tr><td>2026-07-24</td><td><strong>MainForm ahora se puede agrandar y maximizar</strong> (única pantalla de la app con esta capacidad — el resto sigue con tamaño fijo). Se agregó <code>MetroForm.Redimensionable</code> (bool, default <code>false</code>): dibuja un botón maximizar/restaurar, agrega bordes arrastrables vía <code>WM_NCHITTEST</code>, y doble clic en la barra de título maximiza/restaura. <code>MainForm.MinimumSize</code> queda fijado al tamaño de diseño original (900×560 lógicos) — no se puede achicar por debajo de eso. La mayoría del contenido ya usaba <code>Dock</code> y se adaptó solo; se ajustó a mano el ancho de la etiqueta y la barra de progreso del grupo "Progreso del despliegue" (antes 600px fijos) para que usen el ancho real disponible.</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido: maximizar una ventana sin borde nativo (<code>FormBorderStyle.None</code>) tapaba la barra de tareas de Windows.</strong> Sin borde nativo, Windows no tiene de dónde calcular el área de trabajo real y maximiza contra el tamaño físico completo de la pantalla. Corregido interceptando <code>WM_GETMINMAXINFO</code> en <code>MetroForm.WndProc</code> y forzando <code>ptMaxSize</code>/<code>ptMaxPosition</code>/<code>ptMaxTrackSize</code> contra <code>Screen.WorkingArea</code> en vez de <code>Screen.Bounds</code>.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Selector de tema (Claro/Oscuro) agregado al ribbon de MainForm.</strong> Como <code>ThemeManager</code> ya transmite <code>TemaCambiado</code> y todos los controles de <code>DesktopComponents</code> ya escuchan ese evento, agregar el combo fue trivial — pero expuso un bug real que ninguna verificación anterior había disparado nunca (porque hasta ahora el tema solo se fijaba una vez, antes de construir cualquier pantalla, jamás en vivo con la pantalla ya abierta).</td><td>Implementado</td></tr>
+              <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido: los controles nativos propios de MainForm (no <code>IThemedControl</code>) quedaban con el color del tema anterior tras un cambio de tema en vivo.</strong> Las etiquetas del ribbon, la etiqueta de error, la etiqueta de etapa actual y los checkboxes de sistemas son <code>Label</code>/<code>CheckBox</code> nativos creados a mano, no controles <code>X</code> de DesktopComponents — capturaban el color del tema una sola vez, al crearse. Al pasar a Oscuro, texto oscuro quedaba sobre fondo oscuro, prácticamente invisible (encontrado al verificar la captura, no a simple vista en el código). Corregido con una <code>SuscripcionTema</code> propia de <code>MainForm</code> que reaplica el color correcto a todos esos controles cada vez que cambia el tema — mismo patrón que ya usan los 18 controles de DesktopComponents, pero a nivel de pantalla en vez de a nivel de control.</td><td>Corregido</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="sec-01">
+        <h2><span class="num">01</span> Comprensión del problema</h2>
+        <p class="lede">El punto de partida es un proceso 100% manual, ejecutado por una persona, sin trazabilidad automática ni protección contra errores de sobrescritura.</p>
+        <p>Cada <strong>GOC</strong> (corrección o mejora) vive en una rama <code>feature/GOC-xxxxx</code> de Bitbucket y puede tocar <strong>SIT</strong>, <strong>IDI</strong>, o ambos. El operador hoy clona manualmente, compila capa por capa con MSBuild, revisa visualmente que no haya errores, copia los binarios a mano hacia uno de los tres ambientes (rutas UNC sobre <code>\\Sdpeapp00009\Aplicaciones\...</code>), y debe recordar — sin ayuda del sistema — qué archivos no debe pisar (hoy, <code>web.config</code>).</p>
+        <p>Los problemas de fondo no son de "falta de un botón", son de <strong>ausencia de garantías</strong>: nada impide que alguien sobrescriba un <code>web.config</code> de producción de prueba, nada registra qué se desplegó ni cuándo, y el conocimiento de "cómo se hace bien" vive únicamente en la cabeza del operador.</p>
+        <p>El objetivo del sistema es convertir ese conocimiento tácito en un flujo determinístico, auditable y repetible, sin alterar el resultado técnico que ya se obtiene hoy con el proceso manual.</p>
+      </section>
+
+      <section id="sec-02">
+        <h2><span class="num">02</span> Análisis funcional</h2>
+        <h3>Actores</h3>
+        <ul>
+          <li><strong>Operador de despliegue</strong>: ingresa el GOC, elige sistema(s) y ambiente, dispara y monitorea el despliegue.</li>
+          <li><strong>Administrador/configurador</strong>: mantiene ambientes, credenciales de Bitbucket y rutas generales. En la práctica será la misma persona en distintos momentos, pero las pantallas están separadas porque el ciclo de vida de la configuración es distinto al de un despliegue puntual.</li>
+        </ul>
+        <h3>Casos de uso</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Caso de uso</th><th>Disparador</th><th>Resultado esperado</th></tr></thead>
+            <tbody>
+              <tr><td>Ejecutar despliegue</td><td>Operador ingresa GOC + sistema + ambiente y confirma</td><td>Clonado, build, copia y registro completo, o fallo con causa clara</td></tr>
+              <tr><td>Configurar ambientes</td><td>Alta/edición/baja de un ambiente</td><td>Ambiente disponible (o retirado) en el combo de la pantalla principal</td></tr>
+              <tr><td>Configurar Bitbucket</td><td>Alta/edición de credenciales y repo</td><td>Clonado autenticado sin exponer el secreto en texto plano</td></tr>
+              <tr><td>Configurar general</td><td>Edición de rutas de trabajo</td><td>La app usa las rutas configuradas, no rutas fijas en código</td></tr>
+              <tr><td>Consultar historial</td><td>Apertura de la ventana de historial</td><td>Filtrado, búsqueda y exportación de despliegues previos</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Reglas de negocio clave</h3>
+        <ul>
+          <li>Un GOC puede afectar SIT, IDI o ambos; la resolución de qué compilar/desplegar depende del sistema seleccionado, no de una convención de nombre del GOC.</li>
+          <li>Un archivo protegido (inicialmente <code>web.config</code>) <strong>nunca</strong> se sobrescribe si ya existe en destino; si no existe, se copia con normalidad.</li>
+          <li>Todo despliegue queda auditado — <strong>incluso si falla</strong>. Un despliegue fallido es un registro válido, no una excepción que se descarta.</li>
+        </ul>
+      </section>
+
+      <section id="sec-03">
+        <h2><span class="num">03</span> Análisis técnico</h2>
+        <div class="tag-row">
+          <span class="tag">C# · .NET Framework 4.8</span>
+          <span class="tag">WinForms</span>
+          <span class="tag">MSBuild v4.0.30319</span>
+          <span class="tag">Bitbucket (Git)</span>
+          <span class="tag">JSON + SQLite</span>
+        </div>
+        <p>Tres integraciones externas concentran casi todo el riesgo técnico: <strong>Git/Bitbucket</strong> (clonado autenticado), <strong>MSBuild</strong> (invocado como proceso externo, tal como se hace hoy) y el <strong>sistema de archivos de red</strong> (rutas UNC compartidas, sujetas a permisos y disponibilidad).</p>
+        <p>Como la UI no debe bloquearse durante clonado/compilación/copia (todas operaciones de I/O o de proceso externo, potencialmente largas), el diseño usa <code>async/await</code> con reporte de progreso (<code>IProgress&lt;T&gt;</code>) hacia la pantalla principal, en vez de hilos manuales o <code>BackgroundWorker</code>.</p>
+        <p>Decisión pendiente de validar contigo: si el clonado se hace invocando <code>git.exe</code> como proceso externo (igual filosofía que MSBuild: usar la misma herramienta que usa el operador hoy) o mediante una librería embebida como LibGit2Sharp. Lo detallo en la sección de preguntas pendientes (21).</p>
+      </section>
+
+      <section id="sec-04">
+        <h2><span class="num">04</span> Riesgos identificados</h2>
+        <p class="lede">Ordenados por impacto. Los tres primeros condicionan decisiones de arquitectura, no solo de implementación.</p>
+        <div class="risk-grid">
+          <div class="risk-card">
+            <span class="sev sev-alta">Alta</span>
+            <h4>La secuencia de build difiere por sistema y puede volver a cambiar</h4>
+            <p>Confirmado: IDI ya tiene 6 capas hoy, SIT tiene 3. Si se hardcodea la secuencia en código, cualquier cambio futuro en cualquiera de los dos sistemas (o en ProPag) requiere una nueva versión de la app. Ver sección 13.</p>
+          </div>
+          <div class="risk-card">
+            <span class="sev sev-alta">Alta</span>
+            <h4>Discrepancia entre ambientes descritos y ambientes reales en los <code>.bat</code></h4>
+            <p><code>despliegueTesting.bat</code> apunta a <code>\\STPEAPP00006\...\SIT-IN-II</code> y <code>despliegueProducccion.bat</code> a <code>\\sppeapp00070\...\SIT-IN-II</code> — ninguno coincide exactamente con <code>\\Sdpeapp00009\...</code> del enunciado original. Hay que levantar con el cliente la lista definitiva y real de rutas antes de cargar <code>Ambientes.json</code> en Fase 1.</p>
+          </div>
+          <div class="risk-card">
+            <span class="sev sev-media">Media</span>
+            <h4>Dependencia de rutas UNC</h4>
+            <p>Las rutas de red dependen de disponibilidad y permisos del usuario Windows que ejecuta la app. Un corte de red a mitad de copia es indistinguible de un disco lleno si no se maneja explícitamente.</p>
+          </div>
+          <div class="risk-card">
+            <span class="sev sev-media">Media</span>
+            <h4>Alcance de la credencial de Bitbucket</h4>
+            <p>Con usuario/contraseña tradicional (no token con permisos acotados), un compromiso de la máquina del operador expone la cuenta completa del operador en Bitbucket, no solo acceso de lectura al repo.</p>
+          </div>
+          <div class="risk-card">
+            <span class="sev sev-media">Media</span>
+            <h4>El login propio se vuelve el nuevo perímetro de seguridad</h4>
+            <p>Al introducir usuarios y contraseñas propios de la app (sección 15), la app pasa a custodiar un secreto adicional (el hash de contraseña) además del secreto de Bitbucket. Debe protegerse con el mismo nivel de cuidado.</p>
+          </div>
+          <div class="risk-card">
+            <span class="sev sev-baja">Baja</span>
+            <h4>Corrupción de configuración JSON</h4>
+            <p><code>Ambientes.json</code> editado a mano (o por un guardado interrumpido) puede quedar inválido y tumbar la app al iniciar.</p>
+          </div>
+          <div class="risk-card">
+            <span class="sev sev-baja">Baja</span>
+            <h4>Re-ejecución sobre un clon existente</h4>
+            <p>Si el mismo GOC se despliega dos veces, ¿se reutiliza el clon (<code>fetch</code>) o se descarta y clona de nuevo? Sin definirlo, el comportamiento será inconsistente entre ejecuciones.</p>
+          </div>
+        </div>
+        <div class="callout note"><span class="callout-label">Riesgos cerrados en esta iteración</span>Concurrencia entre operadores (no aplica, solo 2 personas con coordinación manual) y despliegue interrumpido a medio camino sin backup (aceptado explícitamente por el cliente: probabilidad baja, se resuelve con un nuevo despliegue si ocurre). Ver <a href="#sec-00">Bitácora de decisiones</a>.</div>
+      </section>
+
+      <section id="sec-05">
+        <h2><span class="num">05</span> Mejoras sugeridas</h2>
+        <p class="lede">Ninguna de estas cambia el resultado técnico del proceso actual; todas reducen riesgo o fricción operativa. Las dos primeras dejaron de ser "sugerencias" y pasaron a ser requisitos confirmados al revisar los repos reales (ver <a href="#sec-00">Bitácora de decisiones</a>).</p>
+        <div class="callout improve"><span class="callout-label">Exclusiones configurables — ahora requisito</span>Confirmado con el cliente: hoy <code>web.config</code> se excluye <strong>manualmente</strong> antes de cada despliegue. La regla real de negocio es "no pisar archivos de configuración específicos del ambiente que ya existen en destino", no un caso particular de un solo archivo. Modelarlo como <code>ExclusionRules.json</code> (patrones, no una constante en código) automatiza exactamente el paso manual de hoy. Ver detalle en la sección 14.</div>
+        <div class="callout improve"><span class="callout-label">Pasos de build configurables — ahora requisito</span>Confirmado: IDI compila 6 capas y SIT compila 3, en secuencias distintas. No puede ser una secuencia fija en código — debe modelarse como una lista ordenada y configurable por sistema (proyecto + comando). Detalle en la sección 13.</div>
+        <div class="callout improve"><span class="callout-label">Historial y usuarios en SQLite</span>En vez de JSON que crece sin límite, SQLite habilita filtros y búsquedas reales (por fecha, GOC, usuario, ambiente) sin cargar todo el archivo en memoria, y da una base relacional natural para el login propio de la sección 15. Detalle comparativo en la sección 16.</div>
+        <div class="callout improve"><span class="callout-label">Compilación en paralelo cuando el GOC toca varios sistemas</span>Los árboles de compilación de SIT, IDI (y el futuro ProPag) son independientes entre sí. Si un GOC modifica más de uno, compilarlos en paralelo no cambia el resultado (cada uno conserva su propia secuencia de <code>Clean,Build</code> intacta) y reduce el tiempo total. Detalle en la sección 20.</div>
+        <div class="callout note"><span class="callout-label">Descartadas por decisión del cliente</span>Backup pre-copia y bloqueo de concurrencia por ambiente se evaluaron y se descartaron explícitamente: el primero porque el escenario de fallo es improbable y basta con el historial + un nuevo despliegue; el segundo porque solo hay 2 operadores con coordinación manual previa. No se implementan en Fase 1.</div>
+      </section>
+
+      <section id="sec-06">
+        <h2><span class="num">06</span> Arquitectura propuesta</h2>
+        <p class="lede">Capas clásicas, con una regla no negociable: <strong>ningún formulario contiene lógica de negocio</strong>. WinForms se presta a violarlo por comodidad (todo en el <code>code-behind</code>), así que la arquitectura debe hacerlo estructuralmente difícil, no solo "por disciplina".</p>
+        <p>Para lograrlo, cada pantalla se divide en <strong>Vista</strong> (el <code>Form</code>, pasivo: solo dibuja y expone eventos) y <strong>Presenter</strong> (vive en <em>Application</em>, contiene la lógica, no conoce WinForms). Es el patrón <strong>MVP (Model-View-Presenter)</strong>: la vista implementa una interfaz (<code>IMainView</code>, <code>IEnvironmentConfigView</code>, ...) que el presenter consume, lo que además permite testear la lógica de pantalla sin renderizar un solo <code>Form</code>.</p>
+        <pre class="mermaid">
+graph TD
+    UI["UI (WinForms + Controls)<br/>Forms pasivos · MVP Views"]
+    APP["Application<br/>Presenters · Orquestadores · Casos de uso"]
+    DOM["Domain<br/>Entidades (Goc, Ambiente, Sistema, Despliegue, AppUser) · Reglas de negocio puras · Result&lt;T&gt;"]
+    INFRA["Infrastructure<br/>Git client · MSBuild runner · FileSystem deployer · Repos JSON/SQLite (Historial + Usuarios)"]
+    SVC["Services<br/>Logging · Hash de contraseñas · Protección DPAPI de credenciales Bitbucket · Notificaciones"]
+    COMMON["Common<br/>Utilidades · Extensiones · Constantes"]
+
+    UI --> APP
+    APP --> DOM
+    APP --> INFRA
+    APP --> SVC
+    INFRA --> DOM
+    INFRA --> COMMON
+    SVC --> COMMON
+    APP --> COMMON
+        </pre>
+        <p>La regla de dependencia es de una sola dirección: <em>Domain</em> no conoce nada por fuera de sí mismo (sin referencias a WinForms, MSBuild, Git ni JSON); <em>Infrastructure</em> implementa interfaces que <em>Domain</em>/<em>Application</em> definen (Inversión de Dependencias), de modo que cambiar "cómo clonamos" o "dónde guardamos historial" nunca obliga a tocar la lógica de negocio.</p>
+      </section>
+
+      <section id="sec-07">
+        <h2><span class="num">07</span> Estructura completa de la solución</h2>
+        <pre>GocDeployManager.sln
+├── src/
+│   ├── GocDeployManager.UI/                  (WinForms · .NET Framework 4.8 · ejecutable)
+│   ├── DesktopComponents/                     (biblioteca de controles, proyecto independiente y reutilizable — sin el prefijo Goc, porque nace para usarse en futuros sistemas)
+│   ├── GocDeployManager.Application/           (presenters, casos de uso, orquestador de despliegue, autenticación de usuarios)
+│   ├── GocDeployManager.Domain/                (entidades, reglas de negocio, interfaces de repos/servicios)
+│   ├── GocDeployManager.Infrastructure/        (Git, MSBuild, FileSystem, repos JSON/SQLite)
+│   ├── GocDeployManager.Services/              (logging, hash de contraseñas, protección DPAPI, notificaciones)
+│   └── GocDeployManager.Common/                (Result&lt;T&gt;, extensiones, constantes compartidas)
+├── tests/
+│   ├── GocDeployManager.Domain.Tests/
+│   ├── GocDeployManager.Application.Tests/
+│   ├── GocDeployManager.Infrastructure.Tests/
+│   └── GocDeployManager.EndToEnd.Tests/        (contra ambiente de prueba SIT-IN-PRUEBA / IDI-IN-PRUEBA)
+└── docs/
+    ├── 00-analisis-inicial.md                  (este documento, una vez aprobado)
+    └── adr/                                     (registro de decisiones arquitectónicas, una por fase)</pre>
+      </section>
+
+      <section id="sec-08">
+        <h2><span class="num">08</span> Responsabilidad de cada proyecto</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Proyecto</th><th>Responsabilidad</th><th>Depende de</th></tr></thead>
+            <tbody>
+              <tr><td><code>UI</code></td><td>Formularios pasivos (incluye Login), consume DesktopComponents, arranque de la app (composition root)</td><td>Application, DesktopComponents</td></tr>
+              <tr><td><code>DesktopComponents</code></td><td>Biblioteca visual propia (ver sección 9). Sin referencias a lógica de negocio, reutilizable en futuros sistemas.</td><td>—</td></tr>
+              <tr><td><code>Application</code></td><td>Presenters, orquestador de despliegue, casos de uso (ejecutar despliegue, gestionar ambientes, autenticar usuarios, gestionar usuarios)</td><td>Domain, Infrastructure, Services, Common</td></tr>
+              <tr><td><code>Domain</code></td><td>Entidades (Goc, Ambiente, Sistema, Despliegue, PasoDeBuild, AppUser), reglas de negocio, interfaces de repositorio/servicio</td><td>Common</td></tr>
+              <tr><td><code>Infrastructure</code></td><td>Implementaciones concretas: cliente Git, invocador de MSBuild, copiador de archivos, repositorio de ambientes (JSON), repositorio de historial y usuarios (SQLite)</td><td>Domain, Common</td></tr>
+              <tr><td><code>Services</code></td><td>Logging (wrapper NLog), hash de contraseñas del login propio, protección DPAPI de credenciales de Bitbucket, notificaciones de UI</td><td>Common</td></tr>
+              <tr><td><code>Common</code></td><td><code>Result&lt;T&gt;</code>, extensiones de propósito general, constantes compartidas</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="sec-09">
+        <h2><span class="num">09</span> Biblioteca de controles personalizados</h2>
+        <div class="callout decision"><span class="callout-label">Decisión</span>Se desarrolla como proyecto <strong>independiente desde el día uno</strong>, nombre confirmado <code>DesktopComponents</code>, sin ninguna referencia a Application/Domain ni al prefijo <code>GocDeployManager</code>. Así puede versionarse y reutilizarse en futuros sistemas de escritorio internos sin arrastrar este dominio de negocio.</div>
+        <p>Se inspira en el <em>look &amp; feel</em> de suites comerciales tipo DotNetBar (bordes redondeados, temas, ribbon) pero es <strong>código propio</strong>: sin dependencias comerciales, sin reutilizar ningún artefacto de terceros.</p>
+        <h3>Principios técnicos comunes a todos los controles</h3>
+        <ul>
+          <li><strong>Theming</strong>: un <code>ThemeManager</code> central expone la paleta activa (Claro/Oscuro); todo control hereda de una base común que se suscribe a cambios de tema y se repinta.</li>
+          <li><strong>Render</strong>: GDI+ (<code>System.Drawing</code>) con double-buffering (<code>ControlStyles.OptimizedDoubleBuffer</code>) y <code>GraphicsPath</code> para bordes redondeados, evitando parpadeo.</li>
+          <li><strong>DPI scaling</strong>: <code>AutoScaleMode.Dpi</code> a nivel de <code>Form</code>, más manejo explícito de <code>DeviceDpi</code> en el render de cada control custom.</li>
+          <li><strong>Animaciones</strong>: transiciones ligeras (hover, expandir/colapsar) con <code>System.Windows.Forms.Timer</code> y easing simple; nada que comprometa el rendimiento en una app de escritorio interna.</li>
+        </ul>
+        <h3>Catálogo inicial</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Control</th><th>Rol en esta aplicación</th></tr></thead>
+            <tbody>
+              <tr><td><code>ButtonX</code></td><td>Acciones primarias/secundarias con estados hover/pressed/disabled temáticos</td></tr>
+              <tr><td><code>TextBoxX</code></td><td>Entrada de GOC, rutas, credenciales (con placeholder y validación visual)</td></tr>
+              <tr><td><code>ComboBoxX</code></td><td>Selección de ambiente y sistema</td></tr>
+              <tr><td><code>GroupPanel</code></td><td>Agrupación visual de secciones de configuración</td></tr>
+              <tr><td><code>TabControl avanzado</code></td><td>Pantalla de configuración general (Ambientes / Bitbucket / General)</td></tr>
+              <tr><td><code>Ribbon</code></td><td>Barra superior de acciones de la pantalla principal</td></tr>
+              <tr><td><code>MetroForm</code></td><td>Chrome de ventana propio para todas las pantallas</td></tr>
+              <tr><td><code>Notification</code></td><td>Aviso de fin de despliegue (éxito/fallo) sin bloquear con un <code>MessageBox</code> modal</td></tr>
+              <tr><td><code>ProgressBar moderna</code></td><td>Porcentaje de avance del despliegue en curso</td></tr>
+              <tr><td><code>Loading Overlay</code></td><td>Bloqueo visual mientras corre clonado/compilación</td></tr>
+              <tr><td><code>MessageBox personalizada</code></td><td>Confirmaciones (p. ej. "¿desplegar GOC-00042 a Ambiente 2?")</td></tr>
+              <tr><td><code>Breadcrumb</code></td><td>Ubicación dentro de configuración (Config &gt; Bitbucket)</td></tr>
+              <tr><td><code>SideMenu</code></td><td>Navegación entre Principal / Configuración / Historial</td></tr>
+              <tr><td><code>StatusBar</code></td><td>Etapa actual + tiempo transcurrido, siempre visible</td></tr>
+              <tr><td><code>PropertyGrid mejorado</code></td><td>Edición estructurada de un ambiente o entrada de Bitbucket</td></tr>
+              <tr><td><code>DataGrid moderno</code></td><td>Listado de historial de despliegues</td></tr>
+              <tr><td><code>TreeView moderno</code></td><td>Exploración de proyectos/capas compiladas por GOC</td></tr>
+              <tr><td><code>ListView moderno</code></td><td>Log en tiempo real del despliegue en curso</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="sec-10">
+        <h2><span class="num">10</span> Diseño de las pantallas</h2>
+        <h3>Login</h3>
+        <div class="screen-mock">
+          <div class="bar">LoginForm — pantalla de entrada, antes que cualquier otra</div>
+          <div class="body">
+            <div class="zone"><b>MetroForm compacto</b>TextBoxX Usuario · TextBoxX Contraseña (modo password) · ButtonX "Ingresar"</div>
+            <div class="zone"><b>Mensaje de error</b>Credenciales inválidas — sin indicar si falló el usuario o la contraseña, para no dar pistas</div>
+          </div>
+        </div>
+        <h3>Gestión de usuarios</h3>
+        <div class="screen-mock">
+          <div class="bar">UserManagementForm</div>
+          <div class="body">
+            <div class="zone"><b>DataGrid moderno</b>Usuarios de la aplicación: nombre de usuario, nombre visible, rol (Administrador / Operador / Consulta), estado (activo/inactivo)</div>
+            <div class="zone"><b>Formulario</b>Alta/edición de usuario · asignación de rol · reseteo de contraseña por un administrador · usuario y contraseña de Bitbucket asociados a ese usuario (protegidos con DPAPI)</div>
+            <div class="zone"><b>Visibilidad</b>Esta pantalla y las de Configuración solo son accesibles para el rol Administrador; el rol Consulta solo ve Historial; Operador ve Principal + Historial</div>
+          </div>
+        </div>
+        <h3>Pantalla principal</h3>
+        <div class="screen-mock">
+          <div class="bar">MainForm — GocDeployManager.UI</div>
+          <div class="body">
+            <div class="zone"><b>Ribbon superior</b>Entrada de GOC · ComboBoxX Ambiente (filtra los sistemas disponibles según lo configurado para ese ambiente) · selección de sistema(s) afectados por el GOC (uno o varios, entre los que el ambiente soporte) · ButtonX "Iniciar despliegue"</div>
+            <div class="zone"><b>Panel de progreso</b>ProgressBar moderna + porcentaje · etapa actual ("Clonando", "Compilando Sit.BusinessLayer", "Copiando archivos") · tiempo transcurrido</div>
+            <div class="zone"><b>ListView moderno</b>Log en tiempo real, coloreado por severidad (info/warn/error)</div>
+            <div class="zone"><b>StatusBar</b>Resultado final y accesos rápidos a Configuración / Historial vía SideMenu</div>
+          </div>
+        </div>
+        <h3>Configuración de ambientes</h3>
+        <div class="screen-mock">
+          <div class="bar">EnvironmentConfigForm</div>
+          <div class="body">
+            <div class="zone"><b>DataGrid moderno</b>Lista de ambientes existentes (N ambientes, sin límite): Nombre · lista de sistemas configurados, cada uno con su propia ruta (SIT, IDI y, a futuro, ProPag — un ambiente puede definir uno, dos o más sistemas)</div>
+            <div class="zone"><b>PropertyGrid mejorado</b>Alta / edición de un ambiente seleccionado</div>
+          </div>
+        </div>
+        <h3>Configuración de Bitbucket</h3>
+        <div class="screen-mock">
+          <div class="bar">BitbucketConfigForm</div>
+          <div class="body">
+            <div class="zone"><b>Formulario (global, un administrador)</b>URL del repositorio por sistema (SIT, IDI, ProPag son 3 repos distintos) — parte de Sistemas.json, junto a los pasos de build (sección 13)</div>
+            <div class="zone"><b>Nota</b>Usuario y contraseña de Bitbucket ya <em>no</em> viven aquí: cada operador registra los suyos en su propio perfil, dentro de Gestión de usuarios (ver arriba), protegidos con DPAPI atado a su sesión Windows — la misma cuenta se usa contra los 3 repositorios</div>
+            <div class="zone"><b>Indicador de estado</b>Prueba de conexión ("Validar credenciales") antes de guardar, usando las credenciales del operador que la ejecuta</div>
+          </div>
+        </div>
+        <h3>Configuración general</h3>
+        <div class="screen-mock">
+          <div class="bar">GeneralConfigForm</div>
+          <div class="body">
+            <div class="zone"><b>Formulario de rutas</b>Clonado · Temporales · Logs · Historial · Configuración — todas leídas inicialmente desde <code>App.config</code>, editables desde aquí y persistidas de vuelta</div>
+          </div>
+        </div>
+        <h3>Historial</h3>
+        <div class="screen-mock">
+          <div class="bar">DeployHistoryForm</div>
+          <div class="body">
+            <div class="zone"><b>Barra de filtros</b>Rango de fechas · GOC · Ambiente · Sistema · Resultado (éxito/fallo)</div>
+            <div class="zone"><b>DataGrid moderno</b>Un registro por despliegue, click para ver detalle completo</div>
+            <div class="zone"><b>Acción</b>Exportar resultados filtrados</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-11">
+        <h2><span class="num">11</span> Flujo completo del despliegue</h2>
+        <ol>
+          <li>El operador inicia sesión con su usuario de la aplicación (sección 15).</li>
+          <li>Ingresa el número de GOC, elige ambiente y el sistema o sistemas afectados, y confirma. Una vez confirmado, el despliegue corre hasta el final — no admite cancelación (decisión del cliente).</li>
+          <li>La app valida que exista la rama <code>feature/GOC-xxxxx</code> en Bitbucket, usando las credenciales del operador en sesión.</li>
+          <li>Clonado (o actualización, si ya existe un clon previo del mismo GOC) de la rama hacia la ruta de trabajo configurada.</li>
+          <li>Resolución de qué capas compilar según el sistema (o sistemas) afectado por el GOC, leyendo la secuencia de pasos de build configurada para cada uno.</li>
+          <li>Ejecución de los pasos de build configurados, cada uno con <code>MSBuild /t:Clean,Build</code>, exactamente como hoy — en paralelo si el GOC afecta más de un sistema (sección 20).</li>
+          <li>Si un paso falla, se aborta de inmediato: no se copia nada y el fallo queda registrado con la etapa y el error exactos.</li>
+          <li>Si todos los pasos compilan, se copian los binarios hacia el ambiente, respetando la lista de exclusión (no se pisa lo que ya existe y está protegido — automatiza el paso manual de hoy).</li>
+          <li>Verificación de la copia (conteo de archivos esperado vs. copiado).</li>
+          <li>Registro del despliegue completo en el historial (éxito o fallo, con todos los tiempos y metadatos, incluyendo el usuario de aplicación que lo ejecutó).</li>
+          <li>Notificación visual al operador del resultado final.</li>
+        </ol>
+      </section>
+
+      <section id="sec-12">
+        <h2><span class="num">12</span> Diagrama de secuencia</h2>
+        <pre class="mermaid">
+sequenceDiagram
+    actor Op as Operador
+    participant UI as MainForm (View)
+    participant Auth as AuthService
+    participant P as DeployPresenter
+    participant Orq as DeploymentOrchestrator
+    participant Git as GitClient
+    participant Build as MSBuildRunner
+    participant FS as FileDeployer
+    participant Hist as HistoryRepository
+    participant Log as Logger
+
+    Op->>UI: Login (usuario + contraseña)
+    UI->>Auth: ValidarCredenciales()
+    Auth-->>UI: Ok (incluye credenciales Bitbucket del operador)
+    Op->>UI: Ingresa GOC + Ambiente + Sistema(s), confirma
+    UI->>P: OnIniciarDespliegue(request)
+    P->>Orq: EjecutarAsync(request)
+    Orq->>Log: Inicio de despliegue
+    Orq->>Git: ClonarORama(GOC, credencialesOperador)
+    Git-->>Orq: Ok / Error
+    alt clonado falló
+        Orq-->>P: Result.Fail("Rama no encontrada")
+        P-->>UI: Mostrar error, registrar en Historial
+    else clonado ok
+        loop por cada paso de build configurado (según sistema)
+            Orq->>Build: EjecutarMSBuild(paso)
+            Build-->>Orq: Ok / Error
+        end
+        alt build falló
+            Orq-->>P: Result.Fail(etapa, detalle)
+            P-->>UI: Mostrar error, registrar en Historial
+        else build ok
+            Orq->>FS: CopiarArchivos(excluyendo protegidos)
+            FS-->>Orq: Resultado copia
+            Orq->>Hist: RegistrarDespliegue(detalle completo, usuario)
+            Orq-->>P: Result.Ok
+            P-->>UI: Notificación de éxito
+        end
+    end
+        </pre>
+      </section>
+
+      <section id="sec-13">
+        <h2><span class="num">13</span> Estrategia de compilación</h2>
+        <p class="lede">Instrucción explícita del cliente: <strong>respetar exactamente</strong> el proceso actual. Al revisar los repos reales (<code>sit-integra-web</code>, <code>idi-web</code>), esto dejó de ser solo una instrucción prudente: es un requisito estructural confirmado.</p>
+        <pre>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe
+  /t:Clean,Build
+  /p:Configuration=Debug
+  /p:TargetFrameworkVersion=v4.0</pre>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Estrategia</th><th>Ventajas</th><th>Desventajas</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="rec"><b>Mantener build por capas</b> (SIT: 3 capas + solución · IDI: 6 capas + solución, cada uno con su propia secuencia)</td>
+                <td>Idéntico resultado al proceso manual actual · granularidad de error por capa (la UI puede mostrar "falló en BusinessLayer") · <strong>confirmado obligatorio</strong>: <code>SITSolution</code>/<code>IDI.sln</code> son proyectos Web Site que dependen de tener las capas ya compiladas</td>
+                <td>Más lento (Clean+Build repetido) · más puntos de fallo · orquestación algo más compleja (mitigada modelándola como configuración, no código)</td>
+              </tr>
+              <tr>
+                <td>Compilar solo la <code>.sln</code> completa</td>
+                <td>Más rápido (build incremental) · un solo log</td>
+                <td><strong>Descartado</strong>: confirmado que el proyecto Web Site no resuelve de forma confiable el orden de sus referencias vía <code>msbuild.exe</code> en línea de comandos · pierde granularidad de error por capa</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout note"><span class="callout-label">Confirmado al inspeccionar los repos</span>Las capas <strong>sí</strong> son <code>ProjectReference</code> (verificado en <code>Sit.BusinessLayer.vbproj</code>: referencias a <code>Sit.BusinessEntities.vbproj</code> y <code>Sit.DataAccessLayer.vbproj</code>). Pero <code>SITSolution</code> no es una Class Library ni una Web Application: es un proyecto <strong>ASP.NET Web Site</strong> (tipo de proyecto <code>{E24C65DC-...}</code> en el <code>.sln</code>, con precompilación vía <code>AspNetCompiler</code> hacia <code>PrecompiledWeb\IN-SIT</code>). Los proyectos Web Site de este tipo son conocidos por no resolver de forma confiable, vía <code>msbuild.exe</code> en línea de comandos, el orden de sus referencias declaradas — necesitan que las DLLs de las capas ya existan compiladas antes de precompilar la web. Por eso <code>compilacion.bat</code> hace exactamente lo que hoy hace: compilar cada capa por separado, en orden, antes de tocar <code>SITSolution</code>. No es una tradición: es cómo funciona este tipo de proyecto.</div>
+        <div class="callout note"><span class="callout-label">Confirmado: la secuencia difiere por sistema</span><code>idi-web/codigo/IDI/compilacion.bat</code> compila 6 capas (<code>IDI.BussinessEntities → IDI.BussinessLogic → IDI.DataAccess → IDI.Facade → IDI.Log → IDI.Utilitario</code>) y luego <code>IDI.sln</code> completo — una secuencia distinta en cantidad y orden a la de SIT. Confirma que la lista de pasos no puede ser una constante compartida entre sistemas.</div>
+        <div class="callout risk"><span class="callout-label">ProPag confirma dos cosas más</span><code>provision-pagos-web</code> reutiliza literalmente los mismos nombres de proyecto y solución que SIT (<code>Sit.BusinessEntities</code>, <code>SITSolution</code>). Esto significa que el identificador de "Sistema" en <code>BuildSteps.json</code>/<code>Ambientes.json</code> debe ser un rótulo de negocio (SIT, IDI, ProPag) desacoplado del nombre físico del proyecto, y que las carpetas de trabajo (clonado) deben aislarse por sistema — de lo contrario, un GOC de ProPag y uno de SIT en curso al mismo tiempo pisarían la misma carpeta local. Además, el <code>compilacion.bat</code> de ProPag pasa explícitamente <code>/p:Configuration=Debug;TargetFrameworkVersion=v4.0</code> en cada paso (SIT/IDI no lo hacen), así que cada paso de build configurado debe poder llevar sus propios parámetros MSBuild opcionales, no solo el target <code>Clean,Build</code>.</div>
+        <p><strong>Recomendación:</strong> mantener las invocaciones por capa exactamente como están hoy en cada sistema, modeladas como una lista ordenada y configurable de "pasos de build" <strong>por sistema</strong> (proyecto + target + parámetros MSBuild opcionales) — <code>BuildSteps.json</code> con una entrada para SIT (3 pasos + solución), IDI (6 pasos + solución) y ProPag (3 pasos + solución, con sus propios parámetros). Así, si cambia el número de capas o los parámetros de cualquier sistema, es un cambio de configuración, no de código.</p>
+      </section>
+
+      <section id="sec-14">
+        <h2><span class="num">14</span> Estrategia de despliegue</h2>
+        <p>La copia hacia el ambiente sigue una regla simple pero debe generalizarse: <strong>si el archivo de destino existe y está en la lista de exclusión, no se toca; en cualquier otro caso, se copia</strong>.</p>
+        <div class="callout note"><span class="callout-label">Lista de exclusión configurable — confirmado como requisito</span>Confirmado con el cliente: hoy <code>web.config</code> se excluye <strong>manualmente</strong> del working copy antes de correr <code>despliegue.bat</code> (los scripts en disco no tienen ninguna protección — hacen <code>del *.* /s /f /q</code> seguido de <code>xcopy</code> completo). Modelarlo como <code>ExclusionRules.json</code> (patrones por nombre/extensión, no una constante en código) automatiza exactamente ese paso manual y deja espacio para el día que aparezca un segundo archivo sensible.</div>
+        <p>Sin backup pre-copia ni rollback automático: decisión explícita del cliente (sección 5) — la probabilidad de fallo de acceso a la ruta destino es baja y, si ocurre, queda registrado en el historial para resolverlo con un nuevo despliegue o intervención manual.</p>
+        <p>Después de copiar, se verifica que el número de archivos copiados coincida con el esperado (excluyendo los protegidos) antes de marcar el despliegue como exitoso.</p>
+        <p>El modelo de ambiente se generaliza: cada ambiente define una lista de (sistema, ruta), no columnas fijas "Ruta SIT" / "Ruta IDI" — necesario porque ya hoy hay ambientes de un solo sistema, y porque el área planea incorporar <strong>ProPag</strong> como tercer sistema.</p>
+      </section>
+
+      <section id="sec-15">
+        <h2><span class="num">15</span> Estrategia de autenticación (login propio + Bitbucket)</h2>
+        <p class="lede">Decisión confirmada: la app mantiene su propio login de usuarios, y cada usuario tiene asociadas sus credenciales de Bitbucket (usuario/contraseña tradicional). Restricción explícita: ningún secreto en texto plano.</p>
+        <h3>Modelo de datos</h3>
+        <p>Un <code>AppUser</code> vive en SQLite (misma base que el historial, sección 16) con: nombre de usuario, hash de contraseña, sal, nombre visible, rol, estado (activo/inactivo), usuario de Bitbucket y contraseña de Bitbucket protegida.</p>
+        <div class="callout risk"><span class="callout-label">Corrección durante la implementación</span>Al construir <code>Infrastructure</code> se confirmó que <strong>SIT, IDI y ProPag son 3 repositorios Bitbucket distintos</strong> (<code>sit-integra-web</code>, <code>idi-web</code>, <code>provision-pagos-web</code>), no uno compartido con "una sola rama base". La URL del repositorio pasó a ser configuración <strong>por sistema</strong> (ver <code>Sistemas.json</code>, sección 13), no global. Lo que sí sigue siendo por-usuario es la credencial (usuario/contraseña) de Bitbucket, porque cada operador tiene su propia cuenta y esa misma cuenta se usa contra los 3 repositorios.</div>
+        <h3>Roles</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rol</th><th>Puede</th></tr></thead>
+            <tbody>
+              <tr><td><b>Administrador</b></td><td>Todo lo de Operador, además de gestionar ambientes, configuración de Bitbucket global y usuarios (alta, reseteo de contraseña, activar/desactivar)</td></tr>
+              <tr><td><b>Operador</b></td><td>Ejecutar despliegues y consultar el Historial completo</td></tr>
+              <tr><td><b>Consulta</b></td><td>Solo ver el Historial (filtros, búsqueda, exportación) — sin acceso a la pantalla principal de despliegue ni a las pantallas de configuración</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Protección de la contraseña de login</h3>
+        <p>Nunca se guarda la contraseña, solo su hash. Se usa <code>Rfc2898DeriveBytes</code> (PBKDF2, incluido en .NET Framework, sin dependencias nuevas) con una sal aleatoria por usuario y un número de iteraciones alto — esto es unidireccional: ni siquiera un administrador puede leer la contraseña de otro usuario, solo puede fijarle una nueva (reseteo, no recuperación).</p>
+        <h3>Protección de la credencial de Bitbucket</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Opción</th><th>Cómo funciona</th><th>Cuándo conviene</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="rec">Windows DPAPI</td>
+                <td><code>ProtectedData.Protect</code> con <code>DataProtectionScope.CurrentUser</code>; el blob cifrado se guarda junto al registro del <code>AppUser</code> en SQLite</td>
+                <td class="rec">Recomendado: cero dependencias nuevas, y laptops personales e intransferibles (confirmado) hacen que atar el cifrado al usuario Windows actual sea una garantía real, no una suposición</td>
+              </tr>
+              <tr>
+                <td>Windows Credential Manager</td>
+                <td>El secreto se guarda en el vault nativo de Windows</td>
+                <td>Alternativa si en el futuro una misma laptop llega a ser compartida por más de un operador — hoy no es el caso</td>
+              </tr>
+              <tr>
+                <td>Cifrado simétrico propio (AES con clave embebida)</td>
+                <td>Clave fija dentro del binario</td>
+                <td style="color:var(--danger);font-weight:650;">Descartado: una clave embebida en el ejecutable es recuperable por ingeniería inversa</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Flujo de login</h3>
+        <p>Al iniciar la app, se muestra la pantalla de Login antes que cualquier otra. Al autenticar, el <code>AuthService</code> descifra en memoria (nunca en disco) la credencial de Bitbucket de ese usuario y la mantiene disponible solo durante la sesión, para usarla en el clonado. Cada intento de login (éxito o fallo) se registra en el log — sin registrar la contraseña, solo el nombre de usuario y el resultado.</p>
+        <p><strong>Recomendación:</strong> política de contraseña simple, sin expiración ni bloqueo por intentos — reseteo manual por un Administrador. Con 2-3 personas hoy, no se justifica algo más estricto; se puede ampliar después si el equipo crece.</p>
+      </section>
+
+      <section id="sec-16">
+        <h2><span class="num">16</span> Estrategia de almacenamiento de configuración</h2>
+        <p>Las rutas físicas de <code>Ambientes.json</code>, <code>Bitbucket.json</code>, clonado, temporales, logs e historial se leen desde <code>App.config</code>, tal como pediste — nada de rutas fijas en código.</p>
+        <p>Antes de sobrescribir un JSON de configuración, se valida su esquema y se guarda una copia de respaldo del archivo anterior; así un guardado interrumpido nunca deja la configuración en un estado irrecuperable.</p>
+        <h3>Historial y usuarios: ¿JSON o SQLite?</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>JSON plano</th><th>SQLite</th></tr></thead>
+            <tbody>
+              <tr><td>Filtrado por fecha/GOC/ambiente</td><td>Requiere cargar y recorrer todo el archivo en memoria</td><td class="rec">Consulta indexada directa</td></tr>
+              <tr><td>Escritura concurrente</td><td>Riesgo de corrupción si dos despliegues terminan casi a la vez</td><td class="rec">Transaccional (ACID) de forma nativa</td></tr>
+              <tr><td>Crecimiento a largo plazo</td><td>Archivo único, cada vez más lento de parsear</td><td class="rec">Escala sin degradar consultas</td></tr>
+              <tr><td>Búsqueda de usuario por nombre en el login</td><td>Recorrido lineal en cada intento de login</td><td class="rec">Índice único sobre <code>Username</code></td></tr>
+              <tr><td>Simplicidad de implementación</td><td class="rec">Trivial</td><td>Requiere <code>System.Data.SQLite</code>, algo más de código inicial</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Recomendación:</strong> un único archivo SQLite (<code>GocDeployManager.db</code>) con dos tablas, <code>DeployHistory</code> y <code>AppUser</code> — un solo archivo que respaldar, y la tabla de usuarios se beneficia de la misma integridad transaccional que el historial. <code>Ambientes.json</code> se mantiene en JSON plano (dato de configuración pequeño, editado con poca frecuencia). <code>Bitbucket.json</code> se reduce a <code>{ RepositoryUrl, BranchBase }</code> — ya no contiene credenciales, porque esas ahora viven por usuario en <code>AppUser</code> (sección 15).</p>
+      </section>
+
+      <section id="sec-17">
+        <h2><span class="num">17</span> Estrategia de logging</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Framework</th><th>A favor</th><th>En contra (para este proyecto)</th></tr></thead>
+            <tbody>
+              <tr><td>log4net</td><td>Maduro, muy usado históricamente en .NET Framework</td><td>Desarrollo más estancado; configuración más rígida; sin structured logging nativo</td></tr>
+              <tr><td>Serilog</td><td>Excelente structured logging, sinks ricos</td><td>Su mayor ventaja (sinks a sistemas externos tipo Seq/Elasticsearch) no aplica aquí; sería sobre-ingeniería para logs de una app de escritorio interna</td></tr>
+              <tr><td class="rec">NLog</td><td>Config XML recargable en caliente (sin reiniciar la app) · múltiples targets simultáneos (archivo rotativo + consola/debug + un target custom hacia el ListView de la UI) · asíncrono (<code>AsyncWrapper</code>) · muy probado en WinForms/.NET Framework</td><td>Ninguna relevante para este caso de uso</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Recomendación: NLog.</strong> Además de archivo rotativo para auditoría técnica, un <em>target</em> custom puede alimentar en vivo el <code>ListView</code> de log de la pantalla principal — el mismo pipeline de logging sirve para diagnóstico y para la UI, sin duplicar código.</p>
+        <p>Se registran como mínimo: intentos de login (usuario y resultado, nunca la contraseña), inicio/fin de despliegue, cada paso de clonado y build (con su resultado), cada operación de copia, cualquier excepción no controlada, y los tiempos de cada etapa.</p>
+      </section>
+
+      <section id="sec-18">
+        <h2><span class="num">18</span> Estrategia de pruebas</h2>
+        <p>Framework confirmado: <strong>NUnit</strong>. Como la organización no tiene convención previa de pruebas, se optó por NUnit sobre MSTest por su ecosistema más rico de pruebas parametrizadas (<code>TestCase</code>, <code>TestCaseSource</code>) — útil aquí porque los escenarios de despliegue se repiten con distintas combinaciones de sistema/ambiente/pasos de build, y las pruebas parametrizadas evitan duplicar código de test para cada combinación.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nivel</th><th>Qué cubre</th><th>Cómo</th></tr></thead>
+            <tbody>
+              <tr><td>Unitario — Domain</td><td>Reglas de negocio puras (resolución de exclusiones, validación de GOC/rama, hash/verificación de contraseña)</td><td>Sin mocks, sin I/O</td></tr>
+              <tr><td>Unitario — Application</td><td>Orquestación del despliegue, manejo de fallos por etapa</td><td>Mocks de Infrastructure vía las interfaces de Domain (Moq)</td></tr>
+              <tr><td>Integración — Infrastructure</td><td>Lectura/escritura real de JSON, SQLite, copia de archivos con exclusiones</td><td>Contra carpetas temporales reales</td></tr>
+              <tr><td>End-to-end</td><td>Clonado + build + copia real</td><td>Contra el ambiente de prueba dedicado <code>SIT-IN-PRUEBA</code> / <code>IDI-IN-PRUEBA</code>, marcado como categoría aparte para no correr en cada build local</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Se valida explícitamente: clonado, compilación, copia de archivos, exclusión de archivos protegidos, lectura/escritura de configuración JSON, registro de historial y manejo de errores en cada etapa.</p>
+      </section>
+
+      <section id="sec-19">
+        <h2><span class="num">19</span> Estrategia de manejo de errores</h2>
+        <p>Para flujo de control esperado (una rama que no existe, un build que falla, un archivo bloqueado), se usa un patrón <code>Result&lt;T&gt;</code> en <em>Common</em>: cada etapa del pipeline devuelve éxito/fallo + mensaje + causa, en vez de lanzar excepciones para condiciones que no son excepcionales.</p>
+        <p>Las excepciones quedan reservadas para lo verdaderamente inesperado (fallo catastrófico de I/O, bug). Se capturan en dos puntos: a nivel de Presenter (para no tumbar la UI) y globalmente (<code>Application.ThreadException</code> / <code>AppDomain.CurrentDomain.UnhandledException</code>), registrando siempre vía el logger antes de mostrar un mensaje entendible al operador.</p>
+        <p>En ambos casos —fallo de negocio o excepción— el resultado se registra en el historial con el detalle suficiente para diagnosticar sin tener que reproducir el despliegue.</p>
+      </section>
+
+      <section id="sec-20">
+        <h2><span class="num">20</span> Posibles optimizaciones</h2>
+        <ul>
+          <li><strong>Compilación en paralelo por sistema</strong>: cuando un GOC afecta más de un sistema (SIT, IDI y, a futuro, ProPag), sus árboles de build son independientes entre sí — compilarlos en paralelo no altera el resultado de ninguno y reduce el tiempo total. Es la única optimización de build que no toca la secuencia interna de cada sistema.</li>
+          <li><strong>Reutilizar el clon existente</strong> (<code>fetch</code> + <code>checkout</code> en vez de <code>clone</code> completo) cuando ya existe una copia local del mismo GOC, en vez de descargar todo el repositorio de nuevo.</li>
+          <li><strong>Modo simulación ("dry-run")</strong> — confirmado como backlog, no bloquea Fase 1: mostrar qué archivos se copiarían y cuáles se excluirían sin ejecutar el despliegue real.</li>
+          <li><strong>Exportación de historial a Excel y PDF</strong> (ambos formatos, confirmado), además de la vista filtrable en pantalla.</li>
+        </ul>
+      </section>
+
+      <section id="sec-21">
+        <h2><span class="num">21</span> Preguntas y decisiones pendientes</h2>
+        <p class="lede">Sin preguntas abiertas. Las 13 preguntas originales, la segunda ronda de 4, y el hallazgo de la ruta de ProPag quedaron todas resueltas — ver <a href="#sec-00">Bitácora de decisiones</a>. Fase 0 cerrada.</p>
+        <div class="callout improve"><span class="callout-label">Estado</span>Sin bloqueantes para iniciar la Fase 1.</div>
+      </section>
+
+      <hr class="sep" />
+      <p style="color:var(--ink-soft);font-size:0.88rem;">Fase 0 cerrada — sin preguntas pendientes. Siguiente paso: detalle de implementación de la Fase 1, comenzando por <code>Common</code> y <code>Domain</code> (no dependen de ningún otro proyecto).</p>
+    </main>
+  </div>
+</div>
+
+</html>
