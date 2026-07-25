@@ -48,7 +48,7 @@ namespace GocDeployManager.UI.Configuracion
         private TextBoxX _txtRutaTemporales;
         private TextBoxX _txtRutaLogs;
         private TextBoxX _txtRutaConfiguracion;
-        private TextBoxX _txtRutaBaseDatos;
+        private TextBoxX _txtCadenaConexionSqlServer;
         private Label _lblErrorGeneral;
 
         public ConfiguracionForm(Bootstrapper bootstrapper)
@@ -744,10 +744,10 @@ namespace GocDeployManager.UI.Configuracion
             contenedor.Controls.Add(_txtRutaConfiguracion);
             y += salto;
 
-            CrearEtiqueta("Ruta del historial (base de datos)", y);
+            CrearEtiqueta("Cadena de conexión SQL Server (usuarios e historial)", y);
             y += LogicalToDeviceUnits(20);
-            _txtRutaBaseDatos = new TextBoxX { Location = new Point(margen, y), Width = ancho };
-            contenedor.Controls.Add(_txtRutaBaseDatos);
+            _txtCadenaConexionSqlServer = new TextBoxX { Location = new Point(margen, y), Width = ancho };
+            contenedor.Controls.Add(_txtCadenaConexionSqlServer);
             y += salto;
 
             _lblErrorGeneral = new Label
@@ -776,7 +776,7 @@ namespace GocDeployManager.UI.Configuracion
             _txtRutaTemporales.Text = _bootstrapper.RutaTemporales;
             _txtRutaLogs.Text = _bootstrapper.RutaLogs;
             _txtRutaConfiguracion.Text = _bootstrapper.RutaConfiguracion;
-            _txtRutaBaseDatos.Text = _bootstrapper.RutaBaseDatos;
+            _txtCadenaConexionSqlServer.Text = _bootstrapper.CadenaConexionSqlServer;
         }
 
         private void BtnGuardarGeneral_Click(object sender, EventArgs e)
@@ -787,11 +787,11 @@ namespace GocDeployManager.UI.Configuracion
             var rutaTemporales = _txtRutaTemporales.Text.Trim();
             var rutaLogs = _txtRutaLogs.Text.Trim();
             var rutaConfiguracion = _txtRutaConfiguracion.Text.Trim();
-            var rutaBaseDatos = _txtRutaBaseDatos.Text.Trim();
+            var cadenaConexionSqlServer = _txtCadenaConexionSqlServer.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(rutaClonado) || string.IsNullOrWhiteSpace(rutaTemporales) ||
                 string.IsNullOrWhiteSpace(rutaLogs) || string.IsNullOrWhiteSpace(rutaConfiguracion) ||
-                string.IsNullOrWhiteSpace(rutaBaseDatos))
+                string.IsNullOrWhiteSpace(cadenaConexionSqlServer))
             {
                 _lblErrorGeneral.Text = "Todas las rutas son obligatorias.";
                 return;
@@ -799,7 +799,7 @@ namespace GocDeployManager.UI.Configuracion
 
             try
             {
-                _bootstrapper.GuardarRutasGenerales(rutaClonado, rutaTemporales, rutaLogs, rutaConfiguracion, rutaBaseDatos);
+                _bootstrapper.GuardarRutasGenerales(rutaClonado, rutaTemporales, rutaLogs, rutaConfiguracion, cadenaConexionSqlServer);
             }
             catch (Exception ex)
             {

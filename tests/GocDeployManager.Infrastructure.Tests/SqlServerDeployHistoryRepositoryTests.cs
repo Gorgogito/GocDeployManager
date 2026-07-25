@@ -1,22 +1,20 @@
 using System;
-using System.IO;
 using GocDeployManager.Domain.Abstractions;
 using GocDeployManager.Domain.Entities;
-using GocDeployManager.Infrastructure.Sqlite;
+using GocDeployManager.Infrastructure.SqlServer;
 using NUnit.Framework;
 
 namespace GocDeployManager.Infrastructure.Tests
 {
     [TestFixture]
-    public class SqliteDeployHistoryRepositoryTests
+    public class SqlServerDeployHistoryRepositoryTests
     {
         [Test]
         public void Registrar_PreservaLaFechaHoraOriginalAlRecuperar()
         {
-            using (var temp = new CarpetaTemporalDePrueba())
+            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
             {
-                var cadenaConexion = $"Data Source={Path.Combine(temp.Ruta, "goc.db")}";
-                var repositorio = new SqliteDeployHistoryRepository(cadenaConexion);
+                var repositorio = new SqlServerDeployHistoryRepository(baseDeDatos.CadenaConexion);
 
                 var fechaOriginal = new DateTime(2026, 3, 5, 14, 30, 0);
                 var despliegue = Despliegue.RegistrarExitoso(
@@ -37,10 +35,9 @@ namespace GocDeployManager.Infrastructure.Tests
         [Test]
         public void Buscar_FiltraPorGocAmbienteYResultado()
         {
-            using (var temp = new CarpetaTemporalDePrueba())
+            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
             {
-                var cadenaConexion = $"Data Source={Path.Combine(temp.Ruta, "goc.db")}";
-                var repositorio = new SqliteDeployHistoryRepository(cadenaConexion);
+                var repositorio = new SqlServerDeployHistoryRepository(baseDeDatos.CadenaConexion);
 
                 repositorio.Registrar(Despliegue.RegistrarExitoso(
                     "jtorres", "jtorres.win", "LAPTOP-01", "GOC-00001", "feature/GOC-00001",

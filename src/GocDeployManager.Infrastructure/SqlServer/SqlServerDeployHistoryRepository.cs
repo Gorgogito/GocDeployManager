@@ -1,21 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Data.SqlClient;
 using GocDeployManager.Common;
 using GocDeployManager.Domain.Abstractions;
 using GocDeployManager.Domain.Entities;
-using Microsoft.Data.Sqlite;
 
-namespace GocDeployManager.Infrastructure.Sqlite
+namespace GocDeployManager.Infrastructure.SqlServer
 {
-    public sealed class SqliteDeployHistoryRepository : IDeployHistoryRepository
+    public sealed class SqlServerDeployHistoryRepository : IDeployHistoryRepository
     {
         private readonly string _cadenaConexion;
 
-        public SqliteDeployHistoryRepository(string cadenaConexion)
+        public SqlServerDeployHistoryRepository(string cadenaConexion)
         {
             _cadenaConexion = Guard.ContraNuloOVacio(cadenaConexion, nameof(cadenaConexion));
-            SqliteEsquema.Asegurar(_cadenaConexion);
+            SqlServerEsquema.Verificar(_cadenaConexion);
         }
 
         public void Registrar(Despliegue despliegue)
@@ -30,22 +29,22 @@ namespace GocDeployManager.Infrastructure.Sqlite
                         (FechaHora, UsuarioAplicacion, UsuarioWindows, Equipo, Goc, Rama, Ambiente, Sistemas,
                          TiempoCompilacionSegundos, TiempoDespliegueSegundos, Resultado, Errores, Observaciones)
                     VALUES
-                        ($fechaHora, $usuarioAplicacion, $usuarioWindows, $equipo, $goc, $rama, $ambiente, $sistemas,
-                         $tiempoCompilacion, $tiempoDespliegue, $resultado, $errores, $observaciones)";
+                        (@fechaHora, @usuarioAplicacion, @usuarioWindows, @equipo, @goc, @rama, @ambiente, @sistemas,
+                         @tiempoCompilacion, @tiempoDespliegue, @resultado, @errores, @observaciones)";
 
-                comando.Parameters.AddWithValue("$fechaHora", despliegue.FechaHora.ToString("O", CultureInfo.InvariantCulture));
-                comando.Parameters.AddWithValue("$usuarioAplicacion", despliegue.UsuarioAplicacion);
-                comando.Parameters.AddWithValue("$usuarioWindows", despliegue.UsuarioWindows);
-                comando.Parameters.AddWithValue("$equipo", despliegue.Equipo);
-                comando.Parameters.AddWithValue("$goc", despliegue.Goc);
-                comando.Parameters.AddWithValue("$rama", despliegue.Rama);
-                comando.Parameters.AddWithValue("$ambiente", despliegue.Ambiente);
-                comando.Parameters.AddWithValue("$sistemas", string.Join(",", despliegue.Sistemas));
-                comando.Parameters.AddWithValue("$tiempoCompilacion", despliegue.TiempoCompilacion.TotalSeconds);
-                comando.Parameters.AddWithValue("$tiempoDespliegue", despliegue.TiempoDespliegue.TotalSeconds);
-                comando.Parameters.AddWithValue("$resultado", despliegue.Resultado.ToString());
-                comando.Parameters.AddWithValue("$errores", (object)despliegue.Errores ?? DBNull.Value);
-                comando.Parameters.AddWithValue("$observaciones", (object)despliegue.Observaciones ?? DBNull.Value);
+                comando.Parameters.AddWithValue("@fechaHora", despliegue.FechaHora);
+                comando.Parameters.AddWithValue("@usuarioAplicacion", despliegue.UsuarioAplicacion);
+                comando.Parameters.AddWithValue("@usuarioWindows", despliegue.UsuarioWindows);
+                comando.Parameters.AddWithValue("@equipo", despliegue.Equipo);
+                comando.Parameters.AddWithValue("@goc", despliegue.Goc);
+                comando.Parameters.AddWithValue("@rama", despliegue.Rama);
+                comando.Parameters.AddWithValue("@ambiente", despliegue.Ambiente);
+                comando.Parameters.AddWithValue("@sistemas", string.Join(",", despliegue.Sistemas));
+                comando.Parameters.AddWithValue("@tiempoCompilacion", despliegue.TiempoCompilacion.TotalSeconds);
+                comando.Parameters.AddWithValue("@tiempoDespliegue", despliegue.TiempoDespliegue.TotalSeconds);
+                comando.Parameters.AddWithValue("@resultado", despliegue.Resultado.ToString());
+                comando.Parameters.AddWithValue("@errores", (object)despliegue.Errores ?? DBNull.Value);
+                comando.Parameters.AddWithValue("@observaciones", (object)despliegue.Observaciones ?? DBNull.Value);
 
                 comando.ExecuteNonQuery();
             }
@@ -60,38 +59,38 @@ namespace GocDeployManager.Infrastructure.Sqlite
 
             if (filtro.FechaDesde.HasValue)
             {
-                condiciones.Add("FechaHora >= $fechaDesde");
-                parametros["$fechaDesde"] = filtro.FechaDesde.Value.ToString("O", CultureInfo.InvariantCulture);
+                condiciones.Add("FechaHora >= @fechaDesde");
+                parametros["@fechaDesde"] = filtro.FechaDesde.Value;
             }
 
             if (filtro.FechaHasta.HasValue)
             {
-                condiciones.Add("FechaHora <= $fechaHasta");
-                parametros["$fechaHasta"] = filtro.FechaHasta.Value.ToString("O", CultureInfo.InvariantCulture);
+                condiciones.Add("FechaHora <= @fechaHasta");
+                parametros["@fechaHasta"] = filtro.FechaHasta.Value;
             }
 
             if (!string.IsNullOrWhiteSpace(filtro.Goc))
             {
-                condiciones.Add("Goc = $goc");
-                parametros["$goc"] = filtro.Goc;
+                condiciones.Add("Goc = @goc");
+                parametros["@goc"] = filtro.Goc;
             }
 
             if (!string.IsNullOrWhiteSpace(filtro.Ambiente))
             {
-                condiciones.Add("Ambiente = $ambiente");
-                parametros["$ambiente"] = filtro.Ambiente;
+                condiciones.Add("Ambiente = @ambiente");
+                parametros["@ambiente"] = filtro.Ambiente;
             }
 
             if (!string.IsNullOrWhiteSpace(filtro.Sistema))
             {
-                condiciones.Add("Sistemas LIKE $sistema");
-                parametros["$sistema"] = "%" + filtro.Sistema + "%";
+                condiciones.Add("Sistemas LIKE @sistema");
+                parametros["@sistema"] = "%" + filtro.Sistema + "%";
             }
 
             if (filtro.Resultado.HasValue)
             {
-                condiciones.Add("Resultado = $resultado");
-                parametros["$resultado"] = filtro.Resultado.Value.ToString();
+                condiciones.Add("Resultado = @resultado");
+                parametros["@resultado"] = filtro.Resultado.Value.ToString();
             }
 
             var clausulaWhere = condiciones.Count > 0 ? "WHERE " + string.Join(" AND ", condiciones) : "";
@@ -115,18 +114,18 @@ namespace GocDeployManager.Infrastructure.Sqlite
             return resultado.AsReadOnly();
         }
 
-        private SqliteConnection AbrirConexion()
+        private SqlConnection AbrirConexion()
         {
-            var conexion = new SqliteConnection(_cadenaConexion);
+            var conexion = new SqlConnection(_cadenaConexion);
             conexion.Open();
             return conexion;
         }
 
-        private static Despliegue Mapear(SqliteDataReader lector)
+        private static Despliegue Mapear(SqlDataReader lector)
         {
             var resultado = (ResultadoDespliegue)Enum.Parse(typeof(ResultadoDespliegue), (string)lector["Resultado"]);
             var sistemas = ((string)lector["Sistemas"]).Split(',');
-            var fechaHora = DateTime.Parse((string)lector["FechaHora"], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+            var fechaHora = (DateTime)lector["FechaHora"];
             var tiempoCompilacion = TimeSpan.FromSeconds(Convert.ToDouble(lector["TiempoCompilacionSegundos"]));
             var tiempoDespliegue = TimeSpan.FromSeconds(Convert.ToDouble(lector["TiempoDespliegueSegundos"]));
             var errores = lector["Errores"] == DBNull.Value ? null : (string)lector["Errores"];

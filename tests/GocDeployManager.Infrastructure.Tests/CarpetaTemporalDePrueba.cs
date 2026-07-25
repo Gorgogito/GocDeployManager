@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Microsoft.Data.Sqlite;
 
 namespace GocDeployManager.Infrastructure.Tests
 {
@@ -19,10 +18,6 @@ namespace GocDeployManager.Infrastructure.Tests
 
         public void Dispose()
         {
-            // Microsoft.Data.Sqlite reutiliza conexiones nativas en un pool;
-            // sin esto el archivo .db queda bloqueado y el borrado falla.
-            SqliteConnection.ClearAllPools();
-
             if (Directory.Exists(Ruta))
                 Directory.Delete(Ruta, recursive: true);
         }

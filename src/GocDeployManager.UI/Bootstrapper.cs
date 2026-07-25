@@ -12,7 +12,7 @@ using GocDeployManager.Infrastructure.Build;
 using GocDeployManager.Infrastructure.Deploy;
 using GocDeployManager.Infrastructure.Git;
 using GocDeployManager.Infrastructure.Json;
-using GocDeployManager.Infrastructure.Sqlite;
+using GocDeployManager.Infrastructure.SqlServer;
 using GocDeployManager.Services;
 
 namespace GocDeployManager.UI
@@ -37,7 +37,7 @@ namespace GocDeployManager.UI
         public string RutaTemporales { get; private set; }
         public string RutaLogs { get; private set; }
         public string RutaConfiguracion { get; private set; }
-        public string RutaBaseDatos { get; private set; }
+        public string CadenaConexionSqlServer { get; private set; }
 
         public Bootstrapper()
         {
@@ -47,7 +47,8 @@ namespace GocDeployManager.UI
             RutaTemporales = ResolverRuta(rutaBase, "RutaTemporales", @".\Data\Temp");
             RutaLogs = ResolverRuta(rutaBase, "RutaLogs", @".\Data\Logs");
             RutaConfiguracion = ResolverRuta(rutaBase, "RutaConfiguracion", @".\Data\Config");
-            RutaBaseDatos = ResolverRuta(rutaBase, "RutaBaseDatos", @".\Data\GocDeployManager.db");
+            CadenaConexionSqlServer = ConfigurationManager.AppSettings["CadenaConexionSqlServer"]
+                ?? throw new InvalidOperationException("Falta configurar 'CadenaConexionSqlServer' en App.config.");
             var rutaMsBuildExe = ConfigurationManager.AppSettings["RutaMsBuildExe"]
                 ?? @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe";
             var rutaGitExe = ConfigurationManager.AppSettings["RutaGitExe"] ?? "git.exe";
@@ -56,12 +57,9 @@ namespace GocDeployManager.UI
             Directory.CreateDirectory(RutaTemporales);
             Directory.CreateDirectory(RutaLogs);
             Directory.CreateDirectory(RutaConfiguracion);
-            Directory.CreateDirectory(Path.GetDirectoryName(RutaBaseDatos) ?? rutaBase);
 
-            var cadenaConexion = $"Data Source={RutaBaseDatos}";
-
-            var appUserRepo = new SqliteAppUserRepository(cadenaConexion);
-            var historialRepo = new SqliteDeployHistoryRepository(cadenaConexion);
+            var appUserRepo = new SqlServerAppUserRepository(CadenaConexionSqlServer);
+            var historialRepo = new SqlServerDeployHistoryRepository(CadenaConexionSqlServer);
             var ambienteRepo = new JsonAmbienteRepository(Path.Combine(RutaConfiguracion, "Ambientes.json"));
             var sistemaRepo = new JsonSistemaRepository(Path.Combine(RutaConfiguracion, "Sistemas.json"));
             var exclusionRepo = new JsonExclusionRulesRepository(Path.Combine(RutaConfiguracion, "ExclusionRules.json"));
@@ -87,7 +85,7 @@ namespace GocDeployManager.UI
         /// las rutas con las que arrancaron (sección 16 del análisis: solo
         /// MSBuild/Git quedan fuera, son fijos y no se editan desde esta pantalla).
         /// </summary>
-        public void GuardarRutasGenerales(string rutaClonado, string rutaTemporales, string rutaLogs, string rutaConfiguracion, string rutaBaseDatos)
+        public void GuardarRutasGenerales(string rutaClonado, string rutaTemporales, string rutaLogs, string rutaConfiguracion, string cadenaConexionSqlServer)
         {
             var configuracion = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
@@ -95,7 +93,7 @@ namespace GocDeployManager.UI
             EstablecerValor(configuracion, "RutaTemporales", rutaTemporales);
             EstablecerValor(configuracion, "RutaLogs", rutaLogs);
             EstablecerValor(configuracion, "RutaConfiguracion", rutaConfiguracion);
-            EstablecerValor(configuracion, "RutaBaseDatos", rutaBaseDatos);
+            EstablecerValor(configuracion, "CadenaConexionSqlServer", cadenaConexionSqlServer);
 
             configuracion.Save(ConfigurationSaveMode.Modified);
 
@@ -103,7 +101,7 @@ namespace GocDeployManager.UI
             RutaTemporales = rutaTemporales;
             RutaLogs = rutaLogs;
             RutaConfiguracion = rutaConfiguracion;
-            RutaBaseDatos = rutaBaseDatos;
+            CadenaConexionSqlServer = cadenaConexionSqlServer;
         }
 
         private static void EstablecerValor(Configuration configuracion, string clave, string valor)

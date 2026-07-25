@@ -1,20 +1,18 @@
-using System.IO;
 using GocDeployManager.Domain.Entities;
-using GocDeployManager.Infrastructure.Sqlite;
+using GocDeployManager.Infrastructure.SqlServer;
 using NUnit.Framework;
 
 namespace GocDeployManager.Infrastructure.Tests
 {
     [TestFixture]
-    public class SqliteAppUserRepositoryTests
+    public class SqlServerAppUserRepositoryTests
     {
         [Test]
         public void AgregarYBuscar_HaceRoundTripCompletoIncluidasLasCredencialesDeBitbucket()
         {
-            using (var temp = new CarpetaTemporalDePrueba())
+            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
             {
-                var cadenaConexion = $"Data Source={Path.Combine(temp.Ruta, "goc.db")}";
-                var repositorio = new SqliteAppUserRepository(cadenaConexion);
+                var repositorio = new SqlServerAppUserRepository(baseDeDatos.CadenaConexion);
 
                 var usuario = new AppUser("jtorres", "Jorge Torres", RolUsuario.Administrador, "hash123", "sal123");
                 usuario.EstablecerCredencialesBitbucket("jtorres.bb", "protegida-base64");
@@ -33,10 +31,9 @@ namespace GocDeployManager.Infrastructure.Tests
         [Test]
         public void BuscarPorNombreUsuario_SiNoExiste_DevuelveNulo()
         {
-            using (var temp = new CarpetaTemporalDePrueba())
+            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
             {
-                var cadenaConexion = $"Data Source={Path.Combine(temp.Ruta, "goc.db")}";
-                var repositorio = new SqliteAppUserRepository(cadenaConexion);
+                var repositorio = new SqlServerAppUserRepository(baseDeDatos.CadenaConexion);
 
                 Assert.That(repositorio.BuscarPorNombreUsuario("no-existe"), Is.Null);
             }
@@ -45,10 +42,9 @@ namespace GocDeployManager.Infrastructure.Tests
         [Test]
         public void Actualizar_PersisteElResetDeContrasenaYElCambioDeEstado()
         {
-            using (var temp = new CarpetaTemporalDePrueba())
+            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
             {
-                var cadenaConexion = $"Data Source={Path.Combine(temp.Ruta, "goc.db")}";
-                var repositorio = new SqliteAppUserRepository(cadenaConexion);
+                var repositorio = new SqlServerAppUserRepository(baseDeDatos.CadenaConexion);
 
                 var usuario = new AppUser("mlopez", "María López", RolUsuario.Consulta, "hashViejo", "salVieja");
                 repositorio.Agregar(usuario);
@@ -67,10 +63,9 @@ namespace GocDeployManager.Infrastructure.Tests
         [Test]
         public void ObtenerTodos_DevuelveTodosLosUsuariosOrdenadosPorNombre()
         {
-            using (var temp = new CarpetaTemporalDePrueba())
+            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
             {
-                var cadenaConexion = $"Data Source={Path.Combine(temp.Ruta, "goc.db")}";
-                var repositorio = new SqliteAppUserRepository(cadenaConexion);
+                var repositorio = new SqlServerAppUserRepository(baseDeDatos.CadenaConexion);
 
                 repositorio.Agregar(new AppUser("zulema", "Zulema", RolUsuario.Operador, "h", "s"));
                 repositorio.Agregar(new AppUser("ana", "Ana", RolUsuario.Operador, "h", "s"));
