@@ -442,6 +442,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:2.4rem 0;}
               <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido: maximizar una ventana sin borde nativo (<code>FormBorderStyle.None</code>) tapaba la barra de tareas de Windows.</strong> Sin borde nativo, Windows no tiene de dónde calcular el área de trabajo real y maximiza contra el tamaño físico completo de la pantalla. Corregido interceptando <code>WM_GETMINMAXINFO</code> en <code>MetroForm.WndProc</code> y forzando <code>ptMaxSize</code>/<code>ptMaxPosition</code>/<code>ptMaxTrackSize</code> contra <code>Screen.WorkingArea</code> en vez de <code>Screen.Bounds</code>.</td><td>Corregido</td></tr>
               <tr><td>2026-07-24</td><td><strong>Selector de tema (Claro/Oscuro) agregado al ribbon de MainForm.</strong> Como <code>ThemeManager</code> ya transmite <code>TemaCambiado</code> y todos los controles de <code>DesktopComponents</code> ya escuchan ese evento, agregar el combo fue trivial — pero expuso un bug real que ninguna verificación anterior había disparado nunca (porque hasta ahora el tema solo se fijaba una vez, antes de construir cualquier pantalla, jamás en vivo con la pantalla ya abierta).</td><td>Implementado</td></tr>
               <tr><td>2026-07-24</td><td><strong>Bug real encontrado y corregido: los controles nativos propios de MainForm (no <code>IThemedControl</code>) quedaban con el color del tema anterior tras un cambio de tema en vivo.</strong> Las etiquetas del ribbon, la etiqueta de error, la etiqueta de etapa actual y los checkboxes de sistemas son <code>Label</code>/<code>CheckBox</code> nativos creados a mano, no controles <code>X</code> de DesktopComponents — capturaban el color del tema una sola vez, al crearse. Al pasar a Oscuro, texto oscuro quedaba sobre fondo oscuro, prácticamente invisible (encontrado al verificar la captura, no a simple vista en el código). Corregido con una <code>SuscripcionTema</code> propia de <code>MainForm</code> que reaplica el color correcto a todos esos controles cada vez que cambia el tema — mismo patrón que ya usan los 18 controles de DesktopComponents, pero a nivel de pantalla en vez de a nivel de control.</td><td>Corregido</td></tr>
+              <tr><td>2026-07-25</td><td><strong>Migración de SQLite a SQL Server (sección 16 actualizada).</strong> El cliente probó desde una segunda máquina el escenario de servidor compartido (app instalada por acceso directo en varias laptops, base de datos centralizada) y confirmó en la práctica el riesgo ya anotado en este documento: SQLite sobre una ruta de red no es viable — funcionó, pero <strong>3 veces más lento</strong> que en local. Se decidió abandonar SQLite por completo (no se mantuvo como opción dual) y migrar a SQL Server. Se le preguntó al cliente si la creación de tablas debía ser automática (como hacía <code>SqliteEsquema.Asegurar</code>) o un script separado — <strong>eligió script separado</strong>, coherente con que en SQL Server corporativo compartido el login de la app normalmente no tiene permisos de DDL. Implementado: <code>sql/schema-sql-server.sql</code> (idempotente, en la raíz del repo — lo ejecuta un DBA/administrador una sola vez por base), <code>SqlServerEsquema.Verificar(...)</code> (falla con mensaje claro si las tablas no existen, en vez de intentar crearlas), <code>SqlServerAppUserRepository</code>/<code>SqlServerDeployHistoryRepository</code> (mismo contrato <code>IAppUserRepository</code>/<code>IDeployHistoryRepository</code>, ahora con <code>System.Data.SqlClient</code>). <code>Microsoft.Data.Sqlite</code> se eliminó del proyecto. Probado contra un motor SQL Server real (LocalDB, no mockeado): cada prueba crea una base temporal, aplica el script real, y la elimina al terminar — incluye una prueba del camino de error (base sin esquema aplicado). 61/61 pruebas automatizadas en verde.</td><td>Implementado</td></tr>
             </tbody>
           </table>
         </div>
@@ -490,7 +491,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:2.4rem 0;}
           <span class="tag">WinForms</span>
           <span class="tag">MSBuild v4.0.30319</span>
           <span class="tag">Bitbucket (Git)</span>
-          <span class="tag">JSON + SQLite</span>
+          <span class="tag">JSON + SQL Server</span>
         </div>
         <p>Tres integraciones externas concentran casi todo el riesgo técnico: <strong>Git/Bitbucket</strong> (clonado autenticado), <strong>MSBuild</strong> (invocado como proceso externo, tal como se hace hoy) y el <strong>sistema de archivos de red</strong> (rutas UNC compartidas, sujetas a permisos y disponibilidad).</p>
         <p>Como la UI no debe bloquearse durante clonado/compilación/copia (todas operaciones de I/O o de proceso externo, potencialmente largas), el diseño usa <code>async/await</code> con reporte de progreso (<code>IProgress&lt;T&gt;</code>) hacia la pantalla principal, en vez de hilos manuales o <code>BackgroundWorker</code>.</p>
@@ -559,7 +560,7 @@ graph TD
     UI["UI (WinForms + Controls)<br/>Forms pasivos · MVP Views"]
     APP["Application<br/>Presenters · Orquestadores · Casos de uso"]
     DOM["Domain<br/>Entidades (Goc, Ambiente, Sistema, Despliegue, AppUser) · Reglas de negocio puras · Result&lt;T&gt;"]
-    INFRA["Infrastructure<br/>Git client · MSBuild runner · FileSystem deployer · Repos JSON/SQLite (Historial + Usuarios)"]
+    INFRA["Infrastructure<br/>Git client · MSBuild runner · FileSystem deployer · Repos JSON/SQL Server (Historial + Usuarios)"]
     SVC["Services<br/>Logging · Hash de contraseñas · Protección DPAPI de credenciales Bitbucket · Notificaciones"]
     COMMON["Common<br/>Utilidades · Extensiones · Constantes"]
 
@@ -583,7 +584,7 @@ graph TD
 │   ├── DesktopComponents/                     (biblioteca de controles, proyecto independiente y reutilizable — sin el prefijo Goc, porque nace para usarse en futuros sistemas)
 │   ├── GocDeployManager.Application/           (presenters, casos de uso, orquestador de despliegue, autenticación de usuarios)
 │   ├── GocDeployManager.Domain/                (entidades, reglas de negocio, interfaces de repos/servicios)
-│   ├── GocDeployManager.Infrastructure/        (Git, MSBuild, FileSystem, repos JSON/SQLite)
+│   ├── GocDeployManager.Infrastructure/        (Git, MSBuild, FileSystem, repos JSON/SQL Server)
 │   ├── GocDeployManager.Services/              (logging, hash de contraseñas, protección DPAPI, notificaciones)
 │   └── GocDeployManager.Common/                (Result&lt;T&gt;, extensiones, constantes compartidas)
 ├── tests/
@@ -606,7 +607,7 @@ graph TD
               <tr><td><code>DesktopComponents</code></td><td>Biblioteca visual propia (ver sección 9). Sin referencias a lógica de negocio, reutilizable en futuros sistemas.</td><td>—</td></tr>
               <tr><td><code>Application</code></td><td>Presenters, orquestador de despliegue, casos de uso (ejecutar despliegue, gestionar ambientes, autenticar usuarios, gestionar usuarios)</td><td>Domain, Infrastructure, Services, Common</td></tr>
               <tr><td><code>Domain</code></td><td>Entidades (Goc, Ambiente, Sistema, Despliegue, PasoDeBuild, AppUser), reglas de negocio, interfaces de repositorio/servicio</td><td>Common</td></tr>
-              <tr><td><code>Infrastructure</code></td><td>Implementaciones concretas: cliente Git, invocador de MSBuild, copiador de archivos, repositorio de ambientes (JSON), repositorio de historial y usuarios (SQLite)</td><td>Domain, Common</td></tr>
+              <tr><td><code>Infrastructure</code></td><td>Implementaciones concretas: cliente Git, invocador de MSBuild, copiador de archivos, repositorio de ambientes (JSON), repositorio de historial y usuarios (SQL Server)</td><td>Domain, Common</td></tr>
               <tr><td><code>Services</code></td><td>Logging (wrapper NLog), hash de contraseñas del login propio, protección DPAPI de credenciales de Bitbucket, notificaciones de UI</td><td>Common</td></tr>
               <tr><td><code>Common</code></td><td><code>Result&lt;T&gt;</code>, extensiones de propósito general, constantes compartidas</td><td>—</td></tr>
             </tbody>
@@ -823,7 +824,7 @@ sequenceDiagram
         <h2><span class="num">15</span> Estrategia de autenticación (login propio + Bitbucket)</h2>
         <p class="lede">Decisión confirmada: la app mantiene su propio login de usuarios, y cada usuario tiene asociadas sus credenciales de Bitbucket (usuario/contraseña tradicional). Restricción explícita: ningún secreto en texto plano.</p>
         <h3>Modelo de datos</h3>
-        <p>Un <code>AppUser</code> vive en SQLite (misma base que el historial, sección 16) con: nombre de usuario, hash de contraseña, sal, nombre visible, rol, estado (activo/inactivo), usuario de Bitbucket y contraseña de Bitbucket protegida.</p>
+        <p>Un <code>AppUser</code> vive en SQL Server (misma base que el historial, sección 16) con: nombre de usuario, hash de contraseña, sal, nombre visible, rol, estado (activo/inactivo), usuario de Bitbucket y contraseña de Bitbucket protegida.</p>
         <div class="callout risk"><span class="callout-label">Corrección durante la implementación</span>Al construir <code>Infrastructure</code> se confirmó que <strong>SIT, IDI y ProPag son 3 repositorios Bitbucket distintos</strong> (<code>sit-integra-web</code>, <code>idi-web</code>, <code>provision-pagos-web</code>), no uno compartido con "una sola rama base". La URL del repositorio pasó a ser configuración <strong>por sistema</strong> (ver <code>Sistemas.json</code>, sección 13), no global. Lo que sí sigue siendo por-usuario es la credencial (usuario/contraseña) de Bitbucket, porque cada operador tiene su propia cuenta y esa misma cuenta se usa contra los 3 repositorios.</div>
         <h3>Roles</h3>
         <div class="table-wrap">
@@ -845,7 +846,7 @@ sequenceDiagram
             <tbody>
               <tr>
                 <td class="rec">Windows DPAPI</td>
-                <td><code>ProtectedData.Protect</code> con <code>DataProtectionScope.CurrentUser</code>; el blob cifrado se guarda junto al registro del <code>AppUser</code> en SQLite</td>
+                <td><code>ProtectedData.Protect</code> con <code>DataProtectionScope.CurrentUser</code>; el blob cifrado se guarda junto al registro del <code>AppUser</code> en SQL Server</td>
                 <td class="rec">Recomendado: cero dependencias nuevas, y laptops personales e intransferibles (confirmado) hacen que atar el cifrado al usuario Windows actual sea una garantía real, no una suposición</td>
               </tr>
               <tr>
@@ -883,7 +884,13 @@ sequenceDiagram
             </tbody>
           </table>
         </div>
-        <p><strong>Recomendación:</strong> un único archivo SQLite (<code>GocDeployManager.db</code>) con dos tablas, <code>DeployHistory</code> y <code>AppUser</code> — un solo archivo que respaldar, y la tabla de usuarios se beneficia de la misma integridad transaccional que el historial. <code>Ambientes.json</code> se mantiene en JSON plano (dato de configuración pequeño, editado con poca frecuencia). <code>Bitbucket.json</code> se reduce a <code>{ RepositoryUrl, BranchBase }</code> — ya no contiene credenciales, porque esas ahora viven por usuario en <code>AppUser</code> (sección 15).</p>
+        <p><strong>Recomendación original (Fase 1):</strong> un único archivo SQLite (<code>GocDeployManager.db</code>) con dos tablas, <code>DeployHistory</code> y <code>AppUser</code> — un solo archivo que respaldar, y la tabla de usuarios se beneficia de la misma integridad transaccional que el historial. <code>Ambientes.json</code> se mantiene en JSON plano (dato de configuración pequeño, editado con poca frecuencia). <code>Bitbucket.json</code> se reduce a <code>{ RepositoryUrl, BranchBase }</code> — ya no contiene credenciales, porque esas ahora viven por usuario en <code>AppUser</code> (sección 15).</p>
+
+        <div class="callout risk">
+          <span class="callout-label">Actualización 2026-07-25: migración de SQLite a SQL Server</span>
+          <p>La comparación de arriba nunca puso en duda SQLite frente a JSON para este volumen de datos — y sigue siendo válida para ese caso. Lo que cambió fue el <strong>modelo de despliegue</strong>: el cliente probó la app instalada en varias máquinas apuntando todas a una única base de datos en un servidor compartido (acceso directo por usuario, BD centralizada) y confirmó en la práctica el riesgo que este documento ya anotaba como posible — SQLite no está diseñado para acceso concurrente sobre una ruta de red (SMB): funcionó, pero <strong>3 veces más lento</strong> que en local.</p>
+          <p>Motor nuevo: <strong>SQL Server</strong> (cliente-servidor real, pensado para esto). Mismas dos tablas (<code>AppUser</code>, <code>DeployHistory</code>), mismo rol de <code>Infrastructure</code> como única capa que lo conoce. Un cambio de diseño nuevo, no cosmético: <strong>la aplicación ya no crea el esquema</strong>. Antes, <code>SqliteEsquema.Asegurar(...)</code> corría <code>CREATE TABLE IF NOT EXISTS</code> en cada arranque; en un SQL Server corporativo compartido el login que usa la app normalmente no tiene permisos de DDL (solo lectura/escritura de datos), así que crear tablas desde la app podría fallar en producción o requerir permisos que un DBA no quiere darle a una cuenta de aplicación. La creación pasa a ser un script versionado (<code>sql/schema-sql-server.sql</code>, idempotente) que un DBA/administrador ejecuta una vez por base — la app solo <em>verifica</em> que las tablas existan al conectar, y si no, falla con un mensaje que apunta directo al script en vez de un error críptico de SQL.</p>
+        </div>
       </section>
 
       <section id="sec-17">
@@ -911,7 +918,7 @@ sequenceDiagram
             <tbody>
               <tr><td>Unitario — Domain</td><td>Reglas de negocio puras (resolución de exclusiones, validación de GOC/rama, hash/verificación de contraseña)</td><td>Sin mocks, sin I/O</td></tr>
               <tr><td>Unitario — Application</td><td>Orquestación del despliegue, manejo de fallos por etapa</td><td>Mocks de Infrastructure vía las interfaces de Domain (Moq)</td></tr>
-              <tr><td>Integración — Infrastructure</td><td>Lectura/escritura real de JSON, SQLite, copia de archivos con exclusiones</td><td>Contra carpetas temporales reales</td></tr>
+              <tr><td>Integración — Infrastructure</td><td>Lectura/escritura real de JSON, SQL Server (LocalDB), copia de archivos con exclusiones</td><td>Contra carpetas temporales reales / base LocalDB temporal</td></tr>
               <tr><td>End-to-end</td><td>Clonado + build + copia real</td><td>Contra el ambiente de prueba dedicado <code>SIT-IN-PRUEBA</code> / <code>IDI-IN-PRUEBA</code>, marcado como categoría aparte para no correr en cada build local</td></tr>
             </tbody>
           </table>
