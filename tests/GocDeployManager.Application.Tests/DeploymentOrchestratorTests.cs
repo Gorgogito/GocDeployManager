@@ -115,6 +115,54 @@ namespace GocDeployManager.Application.Tests
         }
 
         [Test]
+        public void EjecutarDespliegue_SiElCodigoDeSistemaTieneCaracteresInvalidos_FallaSinCrashearYSinClonar()
+        {
+            // Reproduce el bug real: un código de sistema con un carácter no
+            // válido para una ruta (p. ej. pegado desde "Copiar como ruta de
+            // acceso", que envuelve el texto en comillas) hacía que
+            // Path.Combine lanzara ArgumentException sin capturar, tumbando
+            // el despliegue completo en vez de registrarlo como fallido.
+            var sistemaConComillas = new Sistema("\"SIT\"", "SIT");
+            _sistemas.Setup(s => s.ObtenerConfiguracion(sistemaConComillas)).Returns(Result.Ok(_configuracionSit));
+
+            var ambiente = new Ambiente("Desarrollo", new[] { new AmbienteSistema(sistemaConComillas, @"\\Sdpeapp00009\Aplicaciones\SIT") });
+            var solicitud = new SolicitudDespliegue(
+                Goc.Crear("GOC-00003").Value, ambiente, new[] { sistemaConComillas },
+                "jtorres", "jtorres.win", "LAPTOP-01", "jtorres.bb", "clave-bb", @"C:\Clonado");
+
+            var resultado = _orquestador.EjecutarDespliegue(solicitud);
+
+            Assert.That(resultado.IsFailure, Is.True);
+            Assert.That(resultado.Error, Does.Contain("Bitbucket"));
+            _git.Verify(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _historial.Verify(h => h.Registrar(It.Is<Despliegue>(d => d.Resultado == ResultadoDespliegue.Fallido)), Times.Once);
+        }
+
+        [Test]
+        public void EjecutarDespliegue_SiLaCarpetaPrecompiladaTieneCaracteresInvalidos_FallaSinCrashearYSinCopiar()
+        {
+            // Mismo bug, en el punto donde de verdad se reportó: la carpeta
+            // precompilada (Configuración › Bitbucket) con comillas rompía
+            // Path.Combine justo antes de copiar, sin capturar la excepción.
+            var configuracionConComillas = new ConfiguracionSistema(
+                _sit, "https://bitbucket.org/org/sit-integra-web.git", "\"SITSolution\\PrecompiledWeb\\IN-SIT\"",
+                new SecuenciaDeBuild(_sit, new[] { new PasoDeBuild(1, "Sit.BusinessEntities") }));
+
+            _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(configuracionConComillas));
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Result.Ok());
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>()))
+                .Returns(Result.Ok("compilación correcta"));
+
+            var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud());
+
+            Assert.That(resultado.IsFailure, Is.True);
+            Assert.That(resultado.Error, Does.Contain("carpeta precompilada"));
+            _deployer.Verify(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>()), Times.Never);
+            _historial.Verify(h => h.Registrar(It.Is<Despliegue>(d => d.Resultado == ResultadoDespliegue.Fallido)), Times.Once);
+        }
+
+        [Test]
         public void EjecutarDespliegue_SiElAmbienteNoSoportaElSistema_FallaSinClonar()
         {
             var otroSistema = new Sistema("IDI", "IDI");
