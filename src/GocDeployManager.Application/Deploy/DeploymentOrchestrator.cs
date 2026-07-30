@@ -67,7 +67,16 @@ namespace GocDeployManager.Application.Deploy
                         $"El ambiente '{solicitud.Ambiente.Nombre}' no tiene configurada una ruta para {sistema.Nombre}.");
 
                 var configuracion = configuracionResultado.Value;
-                var rutaTrabajo = Path.Combine(solicitud.RutaClonadoBase, sistema.Codigo, solicitud.Goc.Numero);
+                string rutaTrabajo;
+                try
+                {
+                    rutaTrabajo = Path.Combine(solicitud.RutaClonadoBase, sistema.Codigo, solicitud.Goc.Numero);
+                }
+                catch (ArgumentException ex)
+                {
+                    return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
+                        $"[{sistema.Nombre}] El código de sistema configurado tiene caracteres inválidos para una ruta (revisá Configuración › Bitbucket): {ex.Message}");
+                }
 
                 progreso?.Report($"[{sistema.Nombre}] Clonando {solicitud.Goc.RamaBitbucket}...");
                 var clonado = _git.ClonarORama(
@@ -94,7 +103,16 @@ namespace GocDeployManager.Application.Deploy
                 cronometroCompilacion.Stop();
 
                 progreso?.Report($"[{sistema.Nombre}] Copiando archivos...");
-                var rutaPrecompilada = Path.Combine(rutaTrabajo, configuracion.CarpetaPrecompilada);
+                string rutaPrecompilada;
+                try
+                {
+                    rutaPrecompilada = Path.Combine(rutaTrabajo, configuracion.CarpetaPrecompilada);
+                }
+                catch (ArgumentException ex)
+                {
+                    return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
+                        $"[{sistema.Nombre}] La carpeta precompilada configurada tiene caracteres inválidos para una ruta (revisá Configuración › Bitbucket): {ex.Message}");
+                }
                 var patronesExclusion = _exclusionRules.ObtenerPatrones();
 
                 cronometroDespliegue.Start();
