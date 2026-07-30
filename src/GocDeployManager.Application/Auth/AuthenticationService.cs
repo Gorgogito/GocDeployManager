@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using GocDeployManager.Common;
 using GocDeployManager.Domain.Abstractions;
 
@@ -48,7 +49,20 @@ namespace GocDeployManager.Application.Auth
 
             string contrasenaBitbucket = null;
             if (!string.IsNullOrEmpty(usuario.ContrasenaBitbucketProtegida))
-                contrasenaBitbucket = _protector.Desproteger(usuario.ContrasenaBitbucketProtegida);
+            {
+                try
+                {
+                    contrasenaBitbucket = _protector.Desproteger(usuario.ContrasenaBitbucketProtegida);
+                }
+                catch (CryptographicException ex)
+                {
+                    // La credencial de Bitbucket se protegió con DPAPI atado a otra
+                    // máquina/usuario de Windows (p. ej. se configuró en otra laptop) —
+                    // no debe impedir el login. El operador se entera recién si intenta
+                    // desplegar, con el mismo mensaje que ya existe para "sin configurar".
+                    _logger.Warn($"No se pudo desproteger la credencial de Bitbucket de '{usuario.NombreUsuario}' en esta máquina: {ex.Message}. Deberá reconfigurarla desde acá.");
+                }
+            }
 
             _logger.Info($"Login exitoso: '{usuario.NombreUsuario}' ({usuario.Rol}).");
             return Result.Ok(new SesionUsuario(usuario, contrasenaBitbucket));
