@@ -43,6 +43,15 @@ namespace GocDeployManager.UI.Principal
         private ButtonX _btnIniciarDespliegue;
         private Label _lblError;
         private GroupPanel _grupoSistemas;
+        private GroupPanel _grupoNotificaciones;
+        private CheckBox _chkNotificar;
+        private CheckBox _chkCanalEmail;
+        private CheckBox _chkCanalTeams;
+        private Label _lblGruposDestinatarios;
+        private Label _lblDestinatariosAdicionales;
+        private TextBoxX _txtDestinatariosAdicionales;
+        private Label _lblNotificacionesDeshabilitadas;
+        private readonly List<CheckBox> _checkboxesGrupos = new List<CheckBox>();
         private GroupPanel _grupoProgreso;
         private Label _lblEtapaActual;
         private ProgressBarX _barraProgreso;
@@ -103,6 +112,16 @@ namespace GocDeployManager.UI.Principal
 
             foreach (var chk in _checkboxesSistema)
                 chk.ForeColor = tema.TextoPrimario;
+
+            _chkNotificar.ForeColor = tema.TextoPrimario;
+            _chkCanalEmail.ForeColor = tema.TextoPrimario;
+            _chkCanalTeams.ForeColor = tema.TextoPrimario;
+            _lblGruposDestinatarios.ForeColor = tema.TextoSecundario;
+            _lblDestinatariosAdicionales.ForeColor = tema.TextoSecundario;
+            _lblNotificacionesDeshabilitadas.ForeColor = tema.TextoSecundario;
+
+            foreach (var chk in _checkboxesGrupos)
+                chk.ForeColor = tema.TextoPrimario;
         }
 
         private void ConstruirControles()
@@ -133,7 +152,11 @@ namespace GocDeployManager.UI.Principal
                 TextAlign = ContentAlignment.MiddleLeft,
             };
             _comboAmbiente = new ComboBoxX { Width = LogicalToDeviceUnits(160), DisplayMember = "Nombre" };
-            _comboAmbiente.SelectedIndexChanged += (s, e) => ActualizarSistemasDisponibles();
+            _comboAmbiente.SelectedIndexChanged += (s, e) =>
+            {
+                ActualizarSistemasDisponibles();
+                ActualizarSeccionNotificaciones();
+            };
             _btnIniciarDespliegue = new ButtonX { Text = "Iniciar despliegue", Width = LogicalToDeviceUnits(160) };
             _btnIniciarDespliegue.Click += BtnIniciarDespliegue_Click;
 
@@ -188,6 +211,8 @@ namespace GocDeployManager.UI.Principal
                 Height = LogicalToDeviceUnits(90),
             };
 
+            ConstruirSeccionNotificaciones(tema);
+
             // Los hijos de un GroupPanel se posicionan con Location absoluto,
             // así que hay que respetar Padding.Top a mano para no dibujar
             // encima de la banda de título del panel (mismo bug que hubo en
@@ -236,6 +261,7 @@ namespace GocDeployManager.UI.Principal
             var contenedorCentral = new Panel { Dock = DockStyle.Fill };
             contenedorCentral.Controls.Add(_log);
             contenedorCentral.Controls.Add(_grupoProgreso);
+            contenedorCentral.Controls.Add(_grupoNotificaciones);
             contenedorCentral.Controls.Add(_grupoSistemas);
             contenedorCentral.Controls.Add(_lblError);
             contenedorCentral.Controls.Add(_overlay);
@@ -248,6 +274,90 @@ namespace GocDeployManager.UI.Principal
             _log.EstirarUltimaColumna();
         }
 
+        /// <summary>
+        /// Sección "Notificaciones" del formulario de inicio de despliegue —
+        /// checkbox premarcado solo si el ambiente elegido las tiene
+        /// habilitadas, canales (Correo/Teams), grupos precargados y un
+        /// campo para destinatarios ad-hoc (análisis de notificaciones,
+        /// sección 14).
+        /// </summary>
+        private void ConstruirSeccionNotificaciones(Theme tema)
+        {
+            _grupoNotificaciones = new GroupPanel
+            {
+                Titulo = "Notificaciones",
+                Dock = DockStyle.Top,
+                Height = LogicalToDeviceUnits(170),
+            };
+
+            var x0 = _grupoNotificaciones.Padding.Left;
+            var y0 = _grupoNotificaciones.Padding.Top;
+
+            _chkNotificar = new CheckBox
+            {
+                Text = "Enviar notificaciones al finalizar",
+                Location = new Point(x0, y0),
+                AutoSize = true,
+                ForeColor = tema.TextoPrimario,
+            };
+
+            _chkCanalEmail = new CheckBox
+            {
+                Text = "Correo",
+                Location = new Point(x0, y0 + LogicalToDeviceUnits(24)),
+                AutoSize = true,
+                ForeColor = tema.TextoPrimario,
+                Checked = true,
+            };
+            _chkCanalTeams = new CheckBox
+            {
+                Text = "Teams",
+                Location = new Point(x0 + LogicalToDeviceUnits(90), y0 + LogicalToDeviceUnits(24)),
+                AutoSize = true,
+                ForeColor = tema.TextoPrimario,
+                Checked = true,
+            };
+
+            _lblGruposDestinatarios = new Label
+            {
+                Text = "Grupos:",
+                Location = new Point(x0, y0 + LogicalToDeviceUnits(50)),
+                AutoSize = true,
+                ForeColor = tema.TextoSecundario,
+            };
+
+            _lblDestinatariosAdicionales = new Label
+            {
+                Text = "Agregar destinatario adicional:",
+                Location = new Point(x0, y0 + LogicalToDeviceUnits(80)),
+                AutoSize = true,
+                ForeColor = tema.TextoSecundario,
+            };
+            _txtDestinatariosAdicionales = new TextBoxX
+            {
+                Location = new Point(x0 + LogicalToDeviceUnits(200), y0 + LogicalToDeviceUnits(76)),
+                Width = LogicalToDeviceUnits(320),
+                TextoMarcador = "correo1@empresa.com, correo2@empresa.com",
+            };
+
+            _lblNotificacionesDeshabilitadas = new Label
+            {
+                Text = "Este ambiente no tiene notificaciones habilitadas (Configuración > Ambientes).",
+                Location = new Point(x0, y0),
+                AutoSize = true,
+                ForeColor = tema.TextoSecundario,
+                Visible = false,
+            };
+
+            _grupoNotificaciones.Controls.Add(_chkNotificar);
+            _grupoNotificaciones.Controls.Add(_chkCanalEmail);
+            _grupoNotificaciones.Controls.Add(_chkCanalTeams);
+            _grupoNotificaciones.Controls.Add(_lblGruposDestinatarios);
+            _grupoNotificaciones.Controls.Add(_lblDestinatariosAdicionales);
+            _grupoNotificaciones.Controls.Add(_txtDestinatariosAdicionales);
+            _grupoNotificaciones.Controls.Add(_lblNotificacionesDeshabilitadas);
+        }
+
         private void CargarAmbientes()
         {
             var ambientes = _bootstrapper.Ambientes.ObtenerTodos();
@@ -257,6 +367,8 @@ namespace GocDeployManager.UI.Principal
 
             if (_comboAmbiente.Items.Count > 0)
                 _comboAmbiente.SelectedIndex = 0;
+
+            ActualizarSeccionNotificaciones();
         }
 
         private void ComboTema_SelectedIndexChanged(object sender, EventArgs e)
@@ -292,6 +404,56 @@ namespace GocDeployManager.UI.Principal
 
                 _grupoSistemas.Controls.Add(chk);
                 _checkboxesSistema.Add(chk);
+                x += LogicalToDeviceUnits(110);
+            }
+        }
+
+        private void ActualizarSeccionNotificaciones()
+        {
+            var ambiente = _comboAmbiente.SelectedItem as Ambiente;
+            var habilitado = ambiente != null && ambiente.NotificacionesHabilitadas;
+
+            _chkNotificar.Visible = habilitado;
+            _chkCanalEmail.Visible = habilitado;
+            _chkCanalTeams.Visible = habilitado;
+            _lblGruposDestinatarios.Visible = habilitado;
+            _lblDestinatariosAdicionales.Visible = habilitado;
+            _txtDestinatariosAdicionales.Visible = habilitado;
+            _lblNotificacionesDeshabilitadas.Visible = !habilitado;
+
+            if (habilitado)
+                _chkNotificar.Checked = true;
+
+            ActualizarGruposDisponibles(habilitado);
+        }
+
+        private void ActualizarGruposDisponibles(bool visible)
+        {
+            foreach (var chk in _checkboxesGrupos)
+                _grupoNotificaciones.Controls.Remove(chk);
+            _checkboxesGrupos.Clear();
+
+            if (!visible)
+                return;
+
+            var tema = ThemeManager.Actual;
+            var x = _lblGruposDestinatarios.Right + LogicalToDeviceUnits(10);
+            var y = _lblGruposDestinatarios.Top;
+
+            foreach (var grupo in _bootstrapper.GruposDestinatarios.ObtenerTodos())
+            {
+                var chk = new CheckBox
+                {
+                    Text = grupo.Nombre,
+                    Location = new Point(x, y),
+                    AutoSize = true,
+                    ForeColor = tema.TextoPrimario,
+                    Tag = grupo.Nombre,
+                    Checked = true,
+                };
+
+                _grupoNotificaciones.Controls.Add(chk);
+                _checkboxesGrupos.Add(chk);
                 x += LogicalToDeviceUnits(110);
             }
         }
@@ -363,6 +525,17 @@ namespace GocDeployManager.UI.Principal
                 return;
             }
 
+            var canalesSeleccionados = new List<string>();
+            if (_chkCanalEmail.Visible && _chkCanalEmail.Checked) canalesSeleccionados.Add("Email");
+            if (_chkCanalTeams.Visible && _chkCanalTeams.Checked) canalesSeleccionados.Add("Teams");
+
+            var gruposSeleccionados = _checkboxesGrupos.Where(c => c.Checked).Select(c => (string)c.Tag).ToList();
+            var destinatariosAdicionales = (_txtDestinatariosAdicionales.Text ?? string.Empty)
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToList();
+
             var solicitud = new SolicitudDespliegue(
                 resultadoGoc.Value,
                 ambiente,
@@ -372,7 +545,11 @@ namespace GocDeployManager.UI.Principal
                 Environment.MachineName,
                 _sesion.Usuario.UsuarioBitbucket,
                 _sesion.ContrasenaBitbucketEnClaro,
-                _bootstrapper.RutaClonado);
+                _bootstrapper.RutaClonado,
+                notificarResultado: _chkNotificar.Visible && _chkNotificar.Checked,
+                gruposDestinatariosSeleccionados: gruposSeleccionados,
+                destinatariosAdicionales: destinatariosAdicionales,
+                canalesSeleccionados: canalesSeleccionados);
 
             await EjecutarDespliegueAsync(solicitud);
         }
@@ -425,6 +602,13 @@ namespace GocDeployManager.UI.Principal
             _txtGoc.Enabled = !activo;
             _comboAmbiente.Enabled = !activo;
             foreach (var chk in _checkboxesSistema)
+                chk.Enabled = !activo;
+
+            _chkNotificar.Enabled = !activo;
+            _chkCanalEmail.Enabled = !activo;
+            _chkCanalTeams.Enabled = !activo;
+            _txtDestinatariosAdicionales.Enabled = !activo;
+            foreach (var chk in _checkboxesGrupos)
                 chk.Enabled = !activo;
         }
 

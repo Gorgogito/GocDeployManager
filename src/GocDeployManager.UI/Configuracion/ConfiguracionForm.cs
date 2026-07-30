@@ -8,6 +8,7 @@ using DesktopComponents.Controls;
 using DesktopComponents.Forms;
 using DesktopComponents.Theming;
 using GocDeployManager.Domain.Entities;
+using GocDeployManager.Notifications;
 
 namespace GocDeployManager.UI.Configuracion
 {
@@ -25,6 +26,8 @@ namespace GocDeployManager.UI.Configuracion
         private List<Ambiente> _ambientesActuales = new List<Ambiente>();
         private List<ConfiguracionSistema> _sistemasActuales = new List<ConfiguracionSistema>();
         private List<AppUser> _usuariosActuales = new List<AppUser>();
+        private List<GrupoDestinatarios> _gruposActuales = new List<GrupoDestinatarios>();
+        private List<MapeoCanalTeams> _mapeosTeamsActuales = new List<MapeoCanalTeams>();
 
         private Breadcrumb _breadcrumb;
         private TabControlX _tabs;
@@ -51,6 +54,24 @@ namespace GocDeployManager.UI.Configuracion
         private TextBoxX _txtCadenaConexionSqlServer;
         private Label _lblErrorGeneral;
 
+        private DataGridX _gridGrupos;
+        private PropertyGridX _propGrupo;
+        private Label _lblErrorGrupos;
+
+        private TextBoxX _txtHostEmail;
+        private TextBoxX _txtPuertoEmail;
+        private TextBoxX _txtRemitenteEmail;
+        private TextBoxX _txtNombreRemitenteEmail;
+        private Label _lblErrorCanalEmail;
+        private DataGridX _gridMapeosTeams;
+        private Label _lblErrorCanalTeams;
+
+        private ComboBoxX _comboPlantillaCanal;
+        private ComboBoxX _comboPlantillaTipoEvento;
+        private TextBox _txtPlantillaContenido;
+        private Label _lblPlantillaTokens;
+        private Label _lblErrorPlantillas;
+
         public ConfiguracionForm(Bootstrapper bootstrapper)
         {
             _bootstrapper = bootstrapper ?? throw new ArgumentNullException(nameof(bootstrapper));
@@ -63,6 +84,9 @@ namespace GocDeployManager.UI.Configuracion
             CargarAmbientes();
             CargarSistemas();
             CargarUsuarios();
+            CargarGrupos();
+            CargarCanales();
+            CargarPlantillas();
             CargarRutasGenerales();
         }
 
@@ -88,6 +112,21 @@ namespace GocDeployManager.UI.Configuracion
             ConstruirTabUsuarios(panelUsuarios);
             _tabs.AgregarPagina("Usuarios", panelUsuarios);
             _titulosPestanas.Add("Usuarios");
+
+            var panelGrupos = new Panel();
+            ConstruirTabGrupos(panelGrupos);
+            _tabs.AgregarPagina("Grupos de destinatarios", panelGrupos);
+            _titulosPestanas.Add("Grupos de destinatarios");
+
+            var panelCanales = new Panel();
+            ConstruirTabCanales(panelCanales);
+            _tabs.AgregarPagina("Canales de notificación", panelCanales);
+            _titulosPestanas.Add("Canales de notificación");
+
+            var panelPlantillas = new Panel();
+            ConstruirTabPlantillas(panelPlantillas);
+            _tabs.AgregarPagina("Plantillas", panelPlantillas);
+            _titulosPestanas.Add("Plantillas");
 
             var panelGeneral = new Panel();
             ConstruirTabGeneral(panelGeneral);
@@ -181,6 +220,7 @@ namespace GocDeployManager.UI.Configuracion
                 Nombre = s.Sistema.Nombre,
                 RutaDestino = s.RutaDestino,
             }).ToList(),
+            NotificacionesHabilitadas = ambiente.NotificacionesHabilitadas,
         };
 
         private void BtnNuevoAmbiente_Click(object sender, EventArgs e)
@@ -219,7 +259,7 @@ namespace GocDeployManager.UI.Configuracion
                     new Sistema(s.Codigo, string.IsNullOrWhiteSpace(s.Nombre) ? s.Codigo : s.Nombre),
                     s.RutaDestino));
 
-                nuevoAmbiente = new Ambiente(editable.Nombre, sistemas);
+                nuevoAmbiente = new Ambiente(editable.Nombre, sistemas, editable.NotificacionesHabilitadas);
             }
             catch (ArgumentException ex)
             {
@@ -694,6 +734,515 @@ namespace GocDeployManager.UI.Configuracion
                 dialogo.ShowDialog(this);
 
             CargarUsuarios();
+        }
+
+        // ---------- Grupos de destinatarios (GruposDestinatarios.json) ----------
+
+        private void ConstruirTabGrupos(Panel contenedor)
+        {
+            var tema = ThemeManager.Actual;
+            var margen = LogicalToDeviceUnits(12);
+
+            var panelBotones = new Panel { Dock = DockStyle.Bottom, Height = LogicalToDeviceUnits(56) };
+
+            var btnNuevo = new ButtonX { Text = "Nuevo", Width = LogicalToDeviceUnits(100), Variante = VarianteButtonX.Secundario };
+            var btnGuardar = new ButtonX { Text = "Guardar", Width = LogicalToDeviceUnits(100), Variante = VarianteButtonX.Primario };
+            var btnEliminar = new ButtonX { Text = "Eliminar", Width = LogicalToDeviceUnits(100), Variante = VarianteButtonX.Peligro };
+
+            btnNuevo.Location = new Point(margen, LogicalToDeviceUnits(12));
+            btnGuardar.Location = new Point(btnNuevo.Right + margen, LogicalToDeviceUnits(12));
+            btnEliminar.Location = new Point(btnGuardar.Right + margen, LogicalToDeviceUnits(12));
+
+            btnNuevo.Click += BtnNuevoGrupo_Click;
+            btnGuardar.Click += BtnGuardarGrupo_Click;
+            btnEliminar.Click += BtnEliminarGrupo_Click;
+
+            _lblErrorGrupos = new Label
+            {
+                Location = new Point(btnEliminar.Right + margen, LogicalToDeviceUnits(16)),
+                Size = new Size(LogicalToDeviceUnits(380), LogicalToDeviceUnits(24)),
+                ForeColor = tema.Peligro,
+            };
+
+            panelBotones.Controls.Add(btnNuevo);
+            panelBotones.Controls.Add(btnGuardar);
+            panelBotones.Controls.Add(btnEliminar);
+            panelBotones.Controls.Add(_lblErrorGrupos);
+
+            _gridGrupos = new DataGridX { Dock = DockStyle.Left, Width = LogicalToDeviceUnits(300) };
+            _gridGrupos.Columns.Add("Nombre", "Nombre");
+            _gridGrupos.Columns.Add("Miembros", "Miembros");
+            _gridGrupos.SelectionChanged += GridGrupos_SelectionChanged;
+
+            _propGrupo = new PropertyGridX { Dock = DockStyle.Fill };
+
+            contenedor.Controls.Add(_propGrupo);
+            contenedor.Controls.Add(_gridGrupos);
+            contenedor.Controls.Add(panelBotones);
+        }
+
+        private void CargarGrupos()
+        {
+            _gruposActuales = _bootstrapper.GruposDestinatarios.ObtenerTodos().ToList();
+
+            _gridGrupos.Rows.Clear();
+            foreach (var grupo in _gruposActuales)
+            {
+                var indice = _gridGrupos.Rows.Add(grupo.Nombre, grupo.Miembros.Count);
+                _gridGrupos.Rows[indice].Tag = grupo;
+            }
+
+            _propGrupo.SelectedObject = _gridGrupos.CurrentRow?.Tag is GrupoDestinatarios actual
+                ? MapearAEditable(actual)
+                : null;
+        }
+
+        private void GridGrupos_SelectionChanged(object sender, EventArgs e)
+        {
+            if (_gridGrupos.CurrentRow?.Tag is GrupoDestinatarios grupo)
+                _propGrupo.SelectedObject = MapearAEditable(grupo);
+        }
+
+        private static GrupoDestinatariosEditable MapearAEditable(GrupoDestinatarios grupo) => new GrupoDestinatariosEditable
+        {
+            Nombre = grupo.Nombre,
+            Miembros = grupo.Miembros.Select(m => new DestinatarioEditable
+            {
+                Nombre = m.Nombre,
+                CorreoElectronico = m.CorreoElectronico,
+            }).ToList(),
+        };
+
+        private void BtnNuevoGrupo_Click(object sender, EventArgs e)
+        {
+            _lblErrorGrupos.Text = string.Empty;
+            _gridGrupos.ClearSelection();
+            _propGrupo.SelectedObject = new GrupoDestinatariosEditable();
+        }
+
+        private void BtnGuardarGrupo_Click(object sender, EventArgs e)
+        {
+            _lblErrorGrupos.Text = string.Empty;
+
+            if (!(_propGrupo.SelectedObject is GrupoDestinatariosEditable editable))
+            {
+                _lblErrorGrupos.Text = "Selecciona o crea un grupo primero.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(editable.Nombre))
+            {
+                _lblErrorGrupos.Text = "El nombre del grupo es obligatorio.";
+                return;
+            }
+
+            var miembros = new List<Destinatario>();
+            foreach (var miembro in editable.Miembros ?? new List<DestinatarioEditable>())
+            {
+                var resultado = Destinatario.Crear(miembro.Nombre, miembro.CorreoElectronico);
+                if (resultado.IsFailure)
+                {
+                    _lblErrorGrupos.Text = resultado.Error;
+                    return;
+                }
+                miembros.Add(resultado.Value);
+            }
+
+            var nuevoGrupo = new GrupoDestinatarios(editable.Nombre, miembros);
+
+            var listaActualizada = _gruposActuales
+                .Where(g => !string.Equals(g.Nombre, nuevoGrupo.Nombre, StringComparison.OrdinalIgnoreCase))
+                .Append(nuevoGrupo)
+                .ToList();
+
+            _bootstrapper.GruposDestinatarios.Guardar(listaActualizada);
+
+            CargarGrupos();
+            NotificationX.Mostrar("Grupo guardado", $"'{nuevoGrupo.Nombre}' se guardó correctamente.", TipoNotificacion.Exito);
+        }
+
+        private void BtnEliminarGrupo_Click(object sender, EventArgs e)
+        {
+            _lblErrorGrupos.Text = string.Empty;
+
+            if (!(_gridGrupos.CurrentRow?.Tag is GrupoDestinatarios grupo))
+            {
+                _lblErrorGrupos.Text = "Selecciona un grupo de la lista para eliminar.";
+                return;
+            }
+
+            var confirmacion = MessageBoxX.Preguntar(
+                this, "Eliminar grupo", $"¿Eliminar el grupo '{grupo.Nombre}'? Esta acción no se puede deshacer.");
+
+            if (confirmacion != ResultadoMessageBoxX.Si)
+                return;
+
+            var listaActualizada = _gruposActuales
+                .Where(g => !string.Equals(g.Nombre, grupo.Nombre, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            _bootstrapper.GruposDestinatarios.Guardar(listaActualizada);
+
+            _propGrupo.SelectedObject = null;
+            CargarGrupos();
+        }
+
+        // ---------- Canales de notificación (CanalEmail.json / CanalTeams.json) ----------
+
+        private void ConstruirTabCanales(Panel contenedor)
+        {
+            // El contenido (Correo + Teams) es más alto que el área visible
+            // de una pestaña en esta pantalla de tamaño fijo — sin esto, la
+            // sección de Teams y sus botones quedan recortados fuera de vista.
+            contenedor.AutoScroll = true;
+
+            var tema = ThemeManager.Actual;
+            var margen = LogicalToDeviceUnits(20);
+            var ancho = LogicalToDeviceUnits(300);
+            var y = LogicalToDeviceUnits(16);
+
+            Label CrearEtiqueta(string texto, int xPos, int yPos, int anchoEtiqueta)
+            {
+                var etiqueta = new Label
+                {
+                    Text = texto,
+                    Location = new Point(xPos, yPos),
+                    Size = new Size(anchoEtiqueta, LogicalToDeviceUnits(18)),
+                    ForeColor = tema.TextoSecundario,
+                    Font = new Font("Segoe UI", 8.5f),
+                };
+                contenedor.Controls.Add(etiqueta);
+                return etiqueta;
+            }
+
+            var lblTituloEmail = new Label
+            {
+                Text = "Correo (relay SMTP interno — sin credenciales, ver sección 8 del análisis de notificaciones)",
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(600), LogicalToDeviceUnits(20)),
+                ForeColor = tema.TextoPrimario,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+            };
+            contenedor.Controls.Add(lblTituloEmail);
+            y += LogicalToDeviceUnits(32);
+
+            CrearEtiqueta("Host", margen, y, ancho);
+            y += LogicalToDeviceUnits(20);
+            _txtHostEmail = new TextBoxX { Location = new Point(margen, y), Width = ancho };
+            contenedor.Controls.Add(_txtHostEmail);
+            y += LogicalToDeviceUnits(46);
+
+            CrearEtiqueta("Puerto", margen, y, ancho);
+            y += LogicalToDeviceUnits(20);
+            _txtPuertoEmail = new TextBoxX { Location = new Point(margen, y), Width = LogicalToDeviceUnits(80) };
+            contenedor.Controls.Add(_txtPuertoEmail);
+            y += LogicalToDeviceUnits(46);
+
+            CrearEtiqueta("Remitente (correo)", margen, y, ancho);
+            y += LogicalToDeviceUnits(20);
+            _txtRemitenteEmail = new TextBoxX { Location = new Point(margen, y), Width = ancho };
+            contenedor.Controls.Add(_txtRemitenteEmail);
+            y += LogicalToDeviceUnits(46);
+
+            CrearEtiqueta("Remitente (nombre visible)", margen, y, ancho);
+            y += LogicalToDeviceUnits(20);
+            _txtNombreRemitenteEmail = new TextBoxX { Location = new Point(margen, y), Width = ancho };
+            contenedor.Controls.Add(_txtNombreRemitenteEmail);
+            y += LogicalToDeviceUnits(40);
+
+            var btnGuardarEmail = new ButtonX { Text = "Guardar", Location = new Point(margen, y), Width = LogicalToDeviceUnits(120), Variante = VarianteButtonX.Primario };
+            btnGuardarEmail.Click += BtnGuardarCanalEmail_Click;
+            var btnProbarEmail = new ButtonX { Text = "Enviar prueba", Location = new Point(btnGuardarEmail.Right + LogicalToDeviceUnits(12), y), Width = LogicalToDeviceUnits(140), Variante = VarianteButtonX.Secundario };
+            btnProbarEmail.Click += BtnProbarCanalEmail_Click;
+            contenedor.Controls.Add(btnGuardarEmail);
+            contenedor.Controls.Add(btnProbarEmail);
+            y += LogicalToDeviceUnits(36);
+
+            _lblErrorCanalEmail = new Label
+            {
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(600), LogicalToDeviceUnits(40)),
+                ForeColor = tema.Peligro,
+            };
+            contenedor.Controls.Add(_lblErrorCanalEmail);
+            y += LogicalToDeviceUnits(56);
+
+            var lblTituloTeams = new Label
+            {
+                Text = "Microsoft Teams (Incoming Webhook — hoy \"Sura Peru Teams\" para todo Sistema/Ambiente)",
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(600), LogicalToDeviceUnits(20)),
+                ForeColor = tema.TextoPrimario,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+            };
+            contenedor.Controls.Add(lblTituloTeams);
+            y += LogicalToDeviceUnits(32);
+
+            _gridMapeosTeams = new DataGridX { Location = new Point(margen, y), Width = LogicalToDeviceUnits(640), Height = LogicalToDeviceUnits(110) };
+            _gridMapeosTeams.Columns.Add("Sistema", "Sistema (vacío = todos)");
+            _gridMapeosTeams.Columns.Add("Ambiente", "Ambiente (vacío = todos)");
+            _gridMapeosTeams.Columns.Add("UrlWebhook", "URL de webhook");
+            _gridMapeosTeams.AllowUserToAddRows = true;
+            _gridMapeosTeams.AllowUserToDeleteRows = true;
+            contenedor.Controls.Add(_gridMapeosTeams);
+            y += LogicalToDeviceUnits(120);
+
+            var btnGuardarTeams = new ButtonX { Text = "Guardar", Location = new Point(margen, y), Width = LogicalToDeviceUnits(120), Variante = VarianteButtonX.Primario };
+            btnGuardarTeams.Click += BtnGuardarCanalTeams_Click;
+            var btnProbarTeams = new ButtonX { Text = "Enviar prueba", Location = new Point(btnGuardarTeams.Right + LogicalToDeviceUnits(12), y), Width = LogicalToDeviceUnits(140), Variante = VarianteButtonX.Secundario };
+            btnProbarTeams.Click += BtnProbarCanalTeams_Click;
+            contenedor.Controls.Add(btnGuardarTeams);
+            contenedor.Controls.Add(btnProbarTeams);
+            y += LogicalToDeviceUnits(36);
+
+            _lblErrorCanalTeams = new Label
+            {
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(600), LogicalToDeviceUnits(40)),
+                ForeColor = tema.Peligro,
+            };
+            contenedor.Controls.Add(_lblErrorCanalTeams);
+        }
+
+        private void CargarCanales()
+        {
+            var email = _bootstrapper.ConfiguracionCanalEmail.Obtener();
+            _txtHostEmail.Text = email?.Host ?? string.Empty;
+            _txtPuertoEmail.Text = (email?.Puerto ?? 25).ToString();
+            _txtRemitenteEmail.Text = email?.Remitente ?? string.Empty;
+            _txtNombreRemitenteEmail.Text = email?.NombreRemitente ?? "GOC Deploy Manager";
+
+            _mapeosTeamsActuales = _bootstrapper.ConfiguracionCanalTeams.ObtenerTodos().ToList();
+            _gridMapeosTeams.Rows.Clear();
+            foreach (var mapeo in _mapeosTeamsActuales)
+                _gridMapeosTeams.Rows.Add(mapeo.Sistema, mapeo.Ambiente, mapeo.UrlWebhook);
+        }
+
+        private void BtnGuardarCanalEmail_Click(object sender, EventArgs e)
+        {
+            _lblErrorCanalEmail.Text = string.Empty;
+
+            if (!int.TryParse(_txtPuertoEmail.Text, out var puerto))
+            {
+                _lblErrorCanalEmail.Text = "El puerto debe ser un número.";
+                return;
+            }
+
+            try
+            {
+                var configuracion = new ConfiguracionCanalEmail(
+                    _txtHostEmail.Text.Trim(), puerto, _txtRemitenteEmail.Text.Trim(), _txtNombreRemitenteEmail.Text.Trim());
+                _bootstrapper.ConfiguracionCanalEmail.Guardar(configuracion);
+            }
+            catch (ArgumentException ex)
+            {
+                _lblErrorCanalEmail.Text = ex.Message;
+                return;
+            }
+
+            NotificationX.Mostrar("Canal de correo guardado", "La configuración se guardó correctamente.", TipoNotificacion.Exito);
+        }
+
+        private async void BtnProbarCanalEmail_Click(object sender, EventArgs e)
+        {
+            _lblErrorCanalEmail.Text = string.Empty;
+
+            var notificacion = NotificacionPendiente.Crear(
+                null, "Email", _sesionCorreoDePrueba(), "[GocDeployManager] Correo de prueba",
+                "<p>Este es un correo de prueba enviado desde Configuración &gt; Canales de notificación.</p>");
+
+            var resultado = await _bootstrapper.CanalEmail.EnviarAsync(notificacion);
+            if (resultado.IsFailure)
+            {
+                _lblErrorCanalEmail.Text = resultado.Error;
+                return;
+            }
+
+            NotificationX.Mostrar("Correo de prueba enviado", $"Se envió a {notificacion.Destinatarios}.", TipoNotificacion.Exito);
+        }
+
+        private string _sesionCorreoDePrueba() =>
+            string.IsNullOrWhiteSpace(_txtRemitenteEmail.Text) ? "prueba@localhost" : _txtRemitenteEmail.Text.Trim();
+
+        private void BtnGuardarCanalTeams_Click(object sender, EventArgs e)
+        {
+            _lblErrorCanalTeams.Text = string.Empty;
+
+            var mapeos = new List<MapeoCanalTeams>();
+            foreach (DataGridViewRow fila in _gridMapeosTeams.Rows)
+            {
+                if (fila.IsNewRow)
+                    continue;
+
+                var urlWebhook = Convert.ToString(fila.Cells["UrlWebhook"].Value ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(urlWebhook))
+                    continue;
+
+                var sistema = Convert.ToString(fila.Cells["Sistema"].Value ?? string.Empty).Trim();
+                var ambiente = Convert.ToString(fila.Cells["Ambiente"].Value ?? string.Empty).Trim();
+
+                try
+                {
+                    mapeos.Add(new MapeoCanalTeams(sistema, ambiente, urlWebhook));
+                }
+                catch (ArgumentException ex)
+                {
+                    _lblErrorCanalTeams.Text = ex.Message;
+                    return;
+                }
+            }
+
+            _bootstrapper.ConfiguracionCanalTeams.Guardar(mapeos);
+            _mapeosTeamsActuales = mapeos;
+
+            NotificationX.Mostrar("Canal de Teams guardado", "La configuración se guardó correctamente.", TipoNotificacion.Exito);
+        }
+
+        private async void BtnProbarCanalTeams_Click(object sender, EventArgs e)
+        {
+            _lblErrorCanalTeams.Text = string.Empty;
+
+            var mapeo = _mapeosTeamsActuales.FirstOrDefault();
+            if (mapeo == null)
+            {
+                _lblErrorCanalTeams.Text = "Guarda al menos un mapeo de Teams antes de probar.";
+                return;
+            }
+
+            var tarjetaDePrueba = "{\"type\":\"message\",\"attachments\":[{\"contentType\":\"application/vnd.microsoft.card.adaptive\"," +
+                "\"content\":{\"type\":\"AdaptiveCard\",\"version\":\"1.4\",\"body\":[{\"type\":\"TextBlock\"," +
+                "\"text\":\"Mensaje de prueba de GocDeployManager\",\"weight\":\"Bolder\"}]}}]}";
+
+            var notificacion = NotificacionPendiente.Crear(null, "Teams", mapeo.UrlWebhook, null, tarjetaDePrueba);
+
+            var resultado = await _bootstrapper.CanalTeams.EnviarAsync(notificacion);
+            if (resultado.IsFailure)
+            {
+                _lblErrorCanalTeams.Text = resultado.Error;
+                return;
+            }
+
+            NotificationX.Mostrar("Mensaje de prueba enviado", "Revisa el canal de Teams configurado.", TipoNotificacion.Exito);
+        }
+
+        // ---------- Plantillas (RutaConfiguracion\Plantillas\{Canal}\{TipoEvento}) ----------
+
+        private void ConstruirTabPlantillas(Panel contenedor)
+        {
+            var tema = ThemeManager.Actual;
+            var margen = LogicalToDeviceUnits(20);
+            var y = LogicalToDeviceUnits(16);
+
+            var lblCanal = new Label { Text = "Canal", Location = new Point(margen, y), AutoSize = true, ForeColor = tema.TextoSecundario };
+            contenedor.Controls.Add(lblCanal);
+            _comboPlantillaCanal = new ComboBoxX { Location = new Point(margen, y + LogicalToDeviceUnits(18)), Width = LogicalToDeviceUnits(140) };
+            _comboPlantillaCanal.Items.Add(NombresDeCanal.Email);
+            _comboPlantillaCanal.Items.Add(NombresDeCanal.Teams);
+            _comboPlantillaCanal.SelectedIndexChanged += (s, e) => CargarPlantillaSeleccionada();
+            contenedor.Controls.Add(_comboPlantillaCanal);
+
+            var xTipo = _comboPlantillaCanal.Right + LogicalToDeviceUnits(20);
+            var lblTipo = new Label { Text = "Tipo de evento", Location = new Point(xTipo, y), AutoSize = true, ForeColor = tema.TextoSecundario };
+            contenedor.Controls.Add(lblTipo);
+            _comboPlantillaTipoEvento = new ComboBoxX { Location = new Point(xTipo, y + LogicalToDeviceUnits(18)), Width = LogicalToDeviceUnits(140) };
+            _comboPlantillaTipoEvento.Items.Add(TiposDeEvento.Iniciado);
+            _comboPlantillaTipoEvento.Items.Add(TiposDeEvento.Exitoso);
+            _comboPlantillaTipoEvento.Items.Add(TiposDeEvento.Fallido);
+            _comboPlantillaTipoEvento.SelectedIndexChanged += (s, e) => CargarPlantillaSeleccionada();
+            contenedor.Controls.Add(_comboPlantillaTipoEvento);
+
+            y += LogicalToDeviceUnits(50);
+
+            _lblPlantillaTokens = new Label
+            {
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(700), LogicalToDeviceUnits(36)),
+                ForeColor = tema.TextoSecundario,
+                Font = new Font("Segoe UI", 8.5f),
+            };
+            contenedor.Controls.Add(_lblPlantillaTokens);
+            y += LogicalToDeviceUnits(44);
+
+            _txtPlantillaContenido = new TextBox
+            {
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(700), LogicalToDeviceUnits(220)),
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                Font = new Font("Cascadia Mono", 9f),
+                BackColor = tema.Superficie,
+                ForeColor = tema.TextoPrimario,
+            };
+            contenedor.Controls.Add(_txtPlantillaContenido);
+            y += LogicalToDeviceUnits(230);
+
+            var btnGuardarPlantilla = new ButtonX { Text = "Guardar", Location = new Point(margen, y), Width = LogicalToDeviceUnits(120), Variante = VarianteButtonX.Primario };
+            btnGuardarPlantilla.Click += BtnGuardarPlantilla_Click;
+            var btnRestaurarPlantilla = new ButtonX { Text = "Restaurar plantilla por defecto", Location = new Point(btnGuardarPlantilla.Right + LogicalToDeviceUnits(12), y), Width = LogicalToDeviceUnits(220), Variante = VarianteButtonX.Secundario };
+            btnRestaurarPlantilla.Click += BtnRestaurarPlantilla_Click;
+            contenedor.Controls.Add(btnGuardarPlantilla);
+            contenedor.Controls.Add(btnRestaurarPlantilla);
+            y += LogicalToDeviceUnits(36);
+
+            _lblErrorPlantillas = new Label
+            {
+                Location = new Point(margen, y),
+                Size = new Size(LogicalToDeviceUnits(700), LogicalToDeviceUnits(24)),
+                ForeColor = tema.Peligro,
+            };
+            contenedor.Controls.Add(_lblErrorPlantillas);
+        }
+
+        private static readonly IReadOnlyDictionary<string, string> TokensPorTipoEvento = new Dictionary<string, string>
+        {
+            [TiposDeEvento.Iniciado] = "{{Goc}} {{Ambiente}} {{Sistemas}} {{UsuarioAplicacion}} {{FechaHora}}",
+            [TiposDeEvento.Exitoso] = "{{Goc}} {{Rama}} {{Ambiente}} {{Sistemas}} {{UsuarioAplicacion}} {{FechaHoraInicio}} {{FechaHora}} {{Duracion}}",
+            [TiposDeEvento.Fallido] = "{{Goc}} {{Etapa}} {{MensajeError}} {{Ambiente}} {{Sistemas}} {{UsuarioAplicacion}} {{FechaHora}}",
+        };
+
+        private void CargarPlantillas()
+        {
+            _comboPlantillaCanal.SelectedIndex = 0;
+            _comboPlantillaTipoEvento.SelectedIndex = 0;
+            CargarPlantillaSeleccionada();
+        }
+
+        private void CargarPlantillaSeleccionada()
+        {
+            if (!(_comboPlantillaCanal.SelectedItem is string canal) || !(_comboPlantillaTipoEvento.SelectedItem is string tipoEvento))
+                return;
+
+            _lblPlantillaTokens.Text = "Tokens disponibles: " +
+                (TokensPorTipoEvento.TryGetValue(tipoEvento, out var tokens) ? tokens : string.Empty);
+            _txtPlantillaContenido.Text = _bootstrapper.Plantillas.Obtener(canal, tipoEvento);
+        }
+
+        private void BtnGuardarPlantilla_Click(object sender, EventArgs e)
+        {
+            _lblErrorPlantillas.Text = string.Empty;
+
+            if (!(_comboPlantillaCanal.SelectedItem is string canal) || !(_comboPlantillaTipoEvento.SelectedItem is string tipoEvento))
+            {
+                _lblErrorPlantillas.Text = "Selecciona un canal y un tipo de evento.";
+                return;
+            }
+
+            _bootstrapper.Plantillas.Guardar(canal, tipoEvento, _txtPlantillaContenido.Text);
+            NotificationX.Mostrar("Plantilla guardada", $"{canal} / {tipoEvento} se guardó correctamente.", TipoNotificacion.Exito);
+        }
+
+        private void BtnRestaurarPlantilla_Click(object sender, EventArgs e)
+        {
+            _lblErrorPlantillas.Text = string.Empty;
+
+            if (!(_comboPlantillaCanal.SelectedItem is string canal) || !(_comboPlantillaTipoEvento.SelectedItem is string tipoEvento))
+            {
+                _lblErrorPlantillas.Text = "Selecciona un canal y un tipo de evento.";
+                return;
+            }
+
+            _bootstrapper.Plantillas.RestaurarPorDefecto(canal, tipoEvento);
+            CargarPlantillaSeleccionada();
         }
 
         // ---------- General ----------

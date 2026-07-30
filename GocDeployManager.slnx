@@ -5,6 +5,7 @@
     <Project Path="src/GocDeployManager.Common/GocDeployManager.Common.csproj" />
     <Project Path="src/GocDeployManager.Domain/GocDeployManager.Domain.csproj" />
     <Project Path="src/GocDeployManager.Infrastructure/GocDeployManager.Infrastructure.csproj" />
+    <Project Path="src/GocDeployManager.Notifications/GocDeployManager.Notifications.csproj" />
     <Project Path="src/GocDeployManager.Services/GocDeployManager.Services.csproj" />
     <Project Path="src/GocDeployManager.UI/GocDeployManager.UI.csproj" />
   </Folder>
@@ -12,5 +13,6 @@
     <Project Path="tests/GocDeployManager.Application.Tests/GocDeployManager.Application.Tests.csproj" />
     <Project Path="tests/GocDeployManager.Domain.Tests/GocDeployManager.Domain.Tests.csproj" />
     <Project Path="tests/GocDeployManager.Infrastructure.Tests/GocDeployManager.Infrastructure.Tests.csproj" />
+    <Project Path="tests/GocDeployManager.Notifications.Tests/GocDeployManager.Notifications.Tests.csproj" />
   </Folder>
 </Solution>

@@ -17,7 +17,7 @@ namespace GocDeployManager.Infrastructure.SqlServer
             SqlServerEsquema.Verificar(_cadenaConexion);
         }
 
-        public void Registrar(Despliegue despliegue)
+        public int Registrar(Despliegue despliegue)
         {
             Guard.ContraNulo(despliegue, nameof(despliegue));
 
@@ -28,6 +28,7 @@ namespace GocDeployManager.Infrastructure.SqlServer
                     INSERT INTO DeployHistory
                         (FechaHora, UsuarioAplicacion, UsuarioWindows, Equipo, Goc, Rama, Ambiente, Sistemas,
                          TiempoCompilacionSegundos, TiempoDespliegueSegundos, Resultado, Errores, Observaciones)
+                    OUTPUT INSERTED.Id
                     VALUES
                         (@fechaHora, @usuarioAplicacion, @usuarioWindows, @equipo, @goc, @rama, @ambiente, @sistemas,
                          @tiempoCompilacion, @tiempoDespliegue, @resultado, @errores, @observaciones)";
@@ -46,7 +47,7 @@ namespace GocDeployManager.Infrastructure.SqlServer
                 comando.Parameters.AddWithValue("@errores", (object)despliegue.Errores ?? DBNull.Value);
                 comando.Parameters.AddWithValue("@observaciones", (object)despliegue.Observaciones ?? DBNull.Value);
 
-                comando.ExecuteNonQuery();
+                return (int)comando.ExecuteScalar();
             }
         }
 

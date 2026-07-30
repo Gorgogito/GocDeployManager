@@ -45,5 +45,23 @@ namespace GocDeployManager.Domain.Tests
         {
             Assert.Throws<ArgumentException>(() => new Ambiente("Vacío", new AmbienteSistema[0]));
         }
+
+        [Test]
+        public void Constructor_NotificacionesHabilitadasPorDefecto()
+        {
+            var ambiente = new Ambiente("Testing", new[] { new AmbienteSistema(Sit, @"\\Sdpeapp00009\Aplicaciones\SIT") });
+
+            Assert.That(ambiente.NotificacionesHabilitadas, Is.True);
+        }
+
+        [Test]
+        public void Constructor_PermiteDeshabilitarNotificaciones()
+        {
+            var ambiente = new Ambiente(
+                "Desarrollo", new[] { new AmbienteSistema(Sit, @"\\Sdpeapp00009\Aplicaciones\SIT") },
+                notificacionesHabilitadas: false);
+
+            Assert.That(ambiente.NotificacionesHabilitadas, Is.False);
+        }
     }
 }

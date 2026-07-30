@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Reference Include="System.Configuration" />
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +31,7 @@
     <ProjectReference Include="..\GocDeployManager.Domain\GocDeployManager.Domain.csproj" />
     <ProjectReference Include="..\GocDeployManager.Application\GocDeployManager.Application.csproj" />
     <ProjectReference Include="..\GocDeployManager.Infrastructure\GocDeployManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\GocDeployManager.Notifications\GocDeployManager.Notifications.csproj" />
     <ProjectReference Include="..\GocDeployManager.Services\GocDeployManager.Services.csproj" />
     <ProjectReference Include="..\DesktopComponents\DesktopComponents.csproj" />
   </ItemGroup>

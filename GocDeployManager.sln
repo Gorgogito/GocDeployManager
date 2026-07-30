@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Domain", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Infrastructure", "src\GocDeployManager.Infrastructure\GocDeployManager.Infrastructure.csproj", "{70083703-42D4-4E40-AEB9-038F656E69D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Notifications", "src\GocDeployManager.Notifications\GocDeployManager.Notifications.csproj", "{5ACF3129-2EE2-44E1-BE09-F2991519EB2D}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Services", "src\GocDeployManager.Services\GocDeployManager.Services.csproj", "{AD4FB616-D988-4503-8D7D-B7BBE576CA42}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.UI", "src\GocDeployManager.UI\GocDeployManager.UI.csproj", "{D9A88B58-908F-4264-B7D1-5B2B2F90B29D}"
@@ -22,6 +24,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Domain.Tests", "tests\GocDeployManager.Domain.Tests\GocDeployManager.Domain.Tests.csproj", "{2806B353-C9F0-4C09-9338-E052CFFC6C95}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Infrastructure.Tests", "tests\GocDeployManager.Infrastructure.Tests\GocDeployManager.Infrastructure.Tests.csproj", "{07C95BF6-8B18-43E1-AB71-23FD5753DF2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GocDeployManager.Notifications.Tests", "tests\GocDeployManager.Notifications.Tests\GocDeployManager.Notifications.Tests.csproj", "{DFA96241-9287-4EC4-A92D-58026A1B7EBE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{63073150-0326-4696-A6CF-28471DE3E4EE}"
 EndProject
@@ -73,6 +77,14 @@ Global
 		{07C95BF6-8B18-43E1-AB71-23FD5753DF2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07C95BF6-8B18-43E1-AB71-23FD5753DF2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07C95BF6-8B18-43E1-AB71-23FD5753DF2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ACF3129-2EE2-44E1-BE09-F2991519EB2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ACF3129-2EE2-44E1-BE09-F2991519EB2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ACF3129-2EE2-44E1-BE09-F2991519EB2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ACF3129-2EE2-44E1-BE09-F2991519EB2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFA96241-9287-4EC4-A92D-58026A1B7EBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFA96241-9287-4EC4-A92D-58026A1B7EBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFA96241-9287-4EC4-A92D-58026A1B7EBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFA96241-9287-4EC4-A92D-58026A1B7EBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,5 +100,7 @@ Global
 		{C597D757-B944-4662-BC38-844FA077FD82} = {DF6656F4-FFF3-462A-A67B-60F70025FB1B}
 		{2806B353-C9F0-4C09-9338-E052CFFC6C95} = {DF6656F4-FFF3-462A-A67B-60F70025FB1B}
 		{07C95BF6-8B18-43E1-AB71-23FD5753DF2B} = {DF6656F4-FFF3-462A-A67B-60F70025FB1B}
+		{5ACF3129-2EE2-44E1-BE09-F2991519EB2D} = {63073150-0326-4696-A6CF-28471DE3E4EE}
+		{DFA96241-9287-4EC4-A92D-58026A1B7EBE} = {DF6656F4-FFF3-462A-A67B-60F70025FB1B}
 	EndGlobalSection
 EndGlobal

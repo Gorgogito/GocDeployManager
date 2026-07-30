@@ -17,6 +17,7 @@ namespace GocDeployManager.Application.Tests
         private Mock<ISistemaRepository> _sistemas;
         private Mock<IExclusionRulesRepository> _exclusionRules;
         private Mock<IDeployHistoryRepository> _historial;
+        private Mock<IPublicadorEventosDespliegue> _publicador;
         private Mock<IAppLogger> _logger;
         private DeploymentOrchestrator _orquestador;
 
@@ -33,10 +34,12 @@ namespace GocDeployManager.Application.Tests
             _sistemas = new Mock<ISistemaRepository>();
             _exclusionRules = new Mock<IExclusionRulesRepository>();
             _historial = new Mock<IDeployHistoryRepository>();
+            _publicador = new Mock<IPublicadorEventosDespliegue>();
             _logger = new Mock<IAppLogger>();
 
             _orquestador = new DeploymentOrchestrator(
-                _git.Object, _msbuild.Object, _deployer.Object, _sistemas.Object, _exclusionRules.Object, _historial.Object, _logger.Object);
+                _git.Object, _msbuild.Object, _deployer.Object, _sistemas.Object, _exclusionRules.Object, _historial.Object,
+                _publicador.Object, _logger.Object);
 
             var secuencia = new SecuenciaDeBuild(_sit, new[]
             {
@@ -57,6 +60,11 @@ namespace GocDeployManager.Application.Tests
         private SolicitudDespliegue CrearSolicitud() => new SolicitudDespliegue(
             Goc.Crear("GOC-00001").Value, _ambienteDesarrollo, new[] { _sit },
             "jtorres", "jtorres.win", "LAPTOP-01", "jtorres.bb", "clave-bb", @"C:\Clonado");
+
+        private SolicitudDespliegue CrearSolicitudConNotificaciones() => new SolicitudDespliegue(
+            Goc.Crear("GOC-00001").Value, _ambienteDesarrollo, new[] { _sit },
+            "jtorres", "jtorres.win", "LAPTOP-01", "jtorres.bb", "clave-bb", @"C:\Clonado",
+            notificarResultado: true, gruposDestinatariosSeleccionados: new[] { "Desarrollo" });
 
         [Test]
         public void EjecutarDespliegue_CaminoFeliz_RegistraExitoEnHistorial()
@@ -123,6 +131,55 @@ namespace GocDeployManager.Application.Tests
             Assert.That(resultado.IsFailure, Is.True);
             Assert.That(resultado.Error, Does.Contain("no tiene configurada una ruta"));
             _git.Verify(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void EjecutarDespliegue_SiNoSeSolicitaNotificar_NuncaPublicaEventos()
+        {
+            _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Result.Ok());
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>()))
+                .Returns(Result.Ok("compilación correcta"));
+            _deployer.Setup(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>()))
+                .Returns(Result.Ok());
+
+            _orquestador.EjecutarDespliegue(CrearSolicitud());
+
+            _publicador.Verify(p => p.Publicar(It.IsAny<IEventoDespliegue>()), Times.Never);
+        }
+
+        [Test]
+        public void EjecutarDespliegue_CaminoFeliz_PublicaInicioYExito()
+        {
+            _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Result.Ok());
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>()))
+                .Returns(Result.Ok("compilación correcta"));
+            _deployer.Setup(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>()))
+                .Returns(Result.Ok());
+            _historial.Setup(h => h.Registrar(It.IsAny<Despliegue>())).Returns(99);
+
+            _orquestador.EjecutarDespliegue(CrearSolicitudConNotificaciones());
+
+            _publicador.Verify(p => p.Publicar(It.IsAny<DespliegueIniciadoEvento>()), Times.Once);
+            _publicador.Verify(p => p.Publicar(It.Is<DespliegueExitosoEvento>(e => e.DespliegueId == 99 && e.Goc == "GOC-00001")), Times.Once);
+        }
+
+        [Test]
+        public void EjecutarDespliegue_SiFallaElClonado_PublicaInicioYFalloConLaEtapaCorrecta()
+        {
+            _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Result.Fail("rama no encontrada"));
+            _historial.Setup(h => h.Registrar(It.IsAny<Despliegue>())).Returns(5);
+
+            _orquestador.EjecutarDespliegue(CrearSolicitudConNotificaciones());
+
+            _publicador.Verify(p => p.Publicar(It.IsAny<DespliegueIniciadoEvento>()), Times.Once);
+            _publicador.Verify(p => p.Publicar(It.Is<DespliegueFallidoEvento>(
+                e => e.DespliegueId == 5 && e.Etapa == EtapaDespliegue.Clonado && e.MensajeError.Contains("rama no encontrada"))), Times.Once);
         }
     }
 }

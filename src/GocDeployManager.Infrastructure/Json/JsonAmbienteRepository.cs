@@ -61,7 +61,8 @@ namespace GocDeployManager.Infrastructure.Json
         private static Ambiente MapearAEntidad(AmbienteDto dto) =>
             new Ambiente(
                 dto.Nombre,
-                dto.Sistemas.Select(s => new AmbienteSistema(new Sistema(s.CodigoSistema, s.NombreSistema), s.RutaDestino)));
+                dto.Sistemas.Select(s => new AmbienteSistema(new Sistema(s.CodigoSistema, s.NombreSistema), s.RutaDestino)),
+                dto.NotificacionesHabilitadas);
 
         private static AmbienteDto MapearADto(Ambiente ambiente) => new AmbienteDto
         {
@@ -72,12 +73,14 @@ namespace GocDeployManager.Infrastructure.Json
                 NombreSistema = s.Sistema.Nombre,
                 RutaDestino = s.RutaDestino,
             }).ToList(),
+            NotificacionesHabilitadas = ambiente.NotificacionesHabilitadas,
         };
 
         private sealed class AmbienteDto
         {
             public string Nombre { get; set; }
             public List<AmbienteSistemaDto> Sistemas { get; set; } = new List<AmbienteSistemaDto>();
+            public bool NotificacionesHabilitadas { get; set; } = true;
         }
 
         private sealed class AmbienteSistemaDto

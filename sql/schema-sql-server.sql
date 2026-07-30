@@ -42,3 +42,31 @@ BEGIN
     );
 END
 GO
+
+-- Sistema de Notificaciones de Despliegue (2026-07-28) — bandeja de salida
+-- durable: cada intento de notificación se persiste antes de intentar
+-- enviarse, y sirve a la vez de auditoría. Cualquier instancia de la app
+-- puede drenar los pendientes de otra sesión (ver docs/analisis-tecnico.html
+-- o el análisis del módulo de notificaciones).
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'NotificationOutbox')
+BEGIN
+    CREATE TABLE NotificationOutbox (
+        Id                              INT             IDENTITY(1,1) PRIMARY KEY,
+        -- NULL para la notificación de "inicio de despliegue": se publica
+        -- antes de que exista la fila en DeployHistory (esa fila recién se
+        -- crea al terminar, con éxito o error).
+        DeployHistoryId                 INT             NULL,
+        FechaHoraCreacion               DATETIME2       NOT NULL,
+        Canal                           NVARCHAR(50)    NOT NULL,
+        Destinatarios                   NVARCHAR(MAX)   NOT NULL,
+        Asunto                          NVARCHAR(500)   NULL,
+        Contenido                       NVARCHAR(MAX)   NOT NULL,
+        Estado                          NVARCHAR(50)    NOT NULL,
+        IntentosRealizados              INT             NOT NULL,
+        ProximoIntentoEn                DATETIME2       NULL,
+        MensajeError                    NVARCHAR(MAX)   NULL,
+        CONSTRAINT FK_NotificationOutbox_DeployHistory
+            FOREIGN KEY (DeployHistoryId) REFERENCES DeployHistory (Id)
+    );
+END
+GO

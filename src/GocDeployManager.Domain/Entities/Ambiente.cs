@@ -15,7 +15,14 @@ namespace GocDeployManager.Domain.Entities
         public string Nombre { get; }
         public IReadOnlyList<AmbienteSistema> Sistemas { get; }
 
-        public Ambiente(string nombre, IEnumerable<AmbienteSistema> sistemas)
+        /// <summary>
+        /// Controla si este ambiente notifica el resultado de sus despliegues
+        /// (análisis de notificaciones, sección 3) — p. ej. se desactiva en
+        /// Desarrollo para no generar ruido. <c>true</c> por defecto.
+        /// </summary>
+        public bool NotificacionesHabilitadas { get; }
+
+        public Ambiente(string nombre, IEnumerable<AmbienteSistema> sistemas, bool notificacionesHabilitadas = true)
         {
             Nombre = Guard.ContraNuloOVacio(nombre, nameof(nombre));
 
@@ -24,6 +31,7 @@ namespace GocDeployManager.Domain.Entities
                 throw new System.ArgumentException("Un ambiente debe soportar al menos un sistema.", nameof(sistemas));
 
             Sistemas = lista.AsReadOnly();
+            NotificacionesHabilitadas = notificacionesHabilitadas;
         }
 
         public bool SoportaSistema(Sistema sistema) => BuscarSistema(sistema) != null;

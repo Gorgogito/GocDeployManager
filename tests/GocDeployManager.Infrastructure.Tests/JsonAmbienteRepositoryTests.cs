@@ -37,6 +37,26 @@ namespace GocDeployManager.Infrastructure.Tests
         }
 
         [Test]
+        public void GuardarYObtenerTodos_PreservaNotificacionesHabilitadas()
+        {
+            using (var temp = new CarpetaTemporalDePrueba())
+            {
+                var rutaArchivo = Path.Combine(temp.Ruta, "Ambientes.json");
+                var repositorio = new JsonAmbienteRepository(rutaArchivo);
+                var sit = new Sistema("SIT", "SIT");
+
+                var desarrollo = new Ambiente("Desarrollo", new[] { new AmbienteSistema(sit, @"C:\Desarrollo") }, notificacionesHabilitadas: false);
+                var testing = new Ambiente("Testing", new[] { new AmbienteSistema(sit, @"C:\Testing") });
+
+                repositorio.Guardar(new[] { desarrollo, testing });
+                var recuperados = repositorio.ObtenerTodos();
+
+                Assert.That(recuperados.Single(a => a.Nombre == "Desarrollo").NotificacionesHabilitadas, Is.False);
+                Assert.That(recuperados.Single(a => a.Nombre == "Testing").NotificacionesHabilitadas, Is.True);
+            }
+        }
+
+        [Test]
         public void ObtenerTodos_SiElArchivoNoExiste_DevuelveListaVacia()
         {
             using (var temp = new CarpetaTemporalDePrueba())
