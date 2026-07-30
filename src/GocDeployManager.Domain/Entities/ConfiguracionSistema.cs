@@ -20,7 +20,12 @@ namespace GocDeployManager.Domain.Entities
         {
             Sistema = Guard.ContraNulo(sistema, nameof(sistema));
             RepositorioUrl = Guard.ContraNuloOVacio(repositorioUrl, nameof(repositorioUrl));
-            CarpetaPrecompilada = Guard.ContraNuloOVacio(carpetaPrecompilada, nameof(carpetaPrecompilada));
+            // .Trim() saca espacios/saltos de línea al principio y al final —
+            // un problema real: pegar la ruta desde otro lado (Excel, un
+            // correo, "Copiar como ruta de acceso") puede dejar un espacio o
+            // salto de línea invisible que Path.Combine rechaza como
+            // "carácter no válido" recién al momento de desplegar.
+            CarpetaPrecompilada = Guard.ContraNuloOVacio(carpetaPrecompilada?.Trim(), nameof(carpetaPrecompilada));
             SecuenciaDeBuild = Guard.ContraNulo(secuenciaDeBuild, nameof(secuenciaDeBuild));
         }
     }
