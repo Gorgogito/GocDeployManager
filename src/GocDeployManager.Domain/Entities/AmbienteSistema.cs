@@ -15,7 +15,12 @@ namespace GocDeployManager.Domain.Entities
         public AmbienteSistema(Sistema sistema, string rutaDestino)
         {
             Sistema = Guard.ContraNulo(sistema, nameof(sistema));
-            RutaDestino = Guard.ContraNuloOVacio(rutaDestino, nameof(rutaDestino));
+            // .Trim() saca espacios/saltos de línea al principio y al final —
+            // un problema real: pegar la ruta desde otro lado (Excel, un
+            // correo, "Copiar como ruta de acceso") puede dejar un espacio o
+            // salto de línea invisible que Path.Combine rechaza como
+            // "carácter no válido" recién al momento de desplegar.
+            RutaDestino = Guard.ContraNuloOVacio(rutaDestino?.Trim(), nameof(rutaDestino));
         }
     }
 }
