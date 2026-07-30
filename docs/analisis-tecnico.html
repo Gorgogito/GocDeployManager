@@ -339,7 +339,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:2.4rem 0;}
       <h1 class="title">Sistema de Automatización de Despliegues GOC — SIT / IDI</h1>
       <p class="subtitle">Propuesta arquitectónica para reemplazar el proceso manual de clonado, compilación y despliegue de correcciones (GOCs) por una aplicación de escritorio WinForms sobre .NET Framework 4.8.</p>
       <div class="meta-row">
-        <span class="chip">Elaborado por <b>Claude</b> — Arquitecto de Software / DevOps</span>
+        <span class="chip">Elaborado por <b>Pamela</b> — Arquitecta de Software / DevOps</span>
         <span class="chip">Fecha <b>2026-07-23</b></span>
         <span class="chip" style="background:var(--success-soft);color:var(--success);border-color:transparent;font-weight:600;">Fase 0 cerrada — lista para Fase 1</span>
       </div>
@@ -398,7 +398,7 @@ hr.sep{border:none;border-top:1px solid var(--line);margin:2.4rem 0;}
               <tr><td>2026-07-23</td><td>Sin backup/rollback automático pre-copia: probabilidad de fallo de acceso a la ruta destino es baja; si ocurre, queda en el historial y se resuelve con un nuevo despliegue o intervención manual.</td><td>Confirmado por el cliente</td></tr>
               <tr><td>2026-07-23</td><td>Un despliegue iniciado no se cancela: corre hasta el final (éxito o fallo).</td><td>Confirmado por el cliente</td></tr>
               <tr><td>2026-07-23</td><td>Exportación de historial en Excel y PDF (ambos formatos).</td><td>Confirmado por el cliente</td></tr>
-              <tr><td>2026-07-23</td><td>Sin convención de pruebas previa en la organización → se adopta <strong>NUnit</strong> para el proyecto.</td><td>Recomendación de Claude, aceptada</td></tr>
+              <tr><td>2026-07-23</td><td>Sin convención de pruebas previa en la organización → se adopta <strong>NUnit</strong> para el proyecto.</td><td>Recomendación de Pamela, aceptada</td></tr>
               <tr><td>2026-07-23</td><td>Git garantizado en toda máquina que ejecute la app → clonado vía <code>git.exe</code> como proceso externo (misma filosofía que MSBuild).</td><td>Confirmado por el cliente</td></tr>
               <tr><td>2026-07-23</td><td>Nombre de solución: <code>GocDeployManager</code>. Nombre de la biblioteca de controles: <code>DesktopComponents</code>, como proyecto propio y reutilizable (no acoplado al nombre del proyecto de negocio).</td><td>Confirmado por el cliente</td></tr>
               <tr><td>2026-07-23</td><td>Laptops personales e intransferibles por operador → DPAPI (<code>CurrentUser</code>) es suficiente para proteger el secreto de Bitbucket de cada usuario de la app.</td><td>Confirmado por el cliente</td></tr>
