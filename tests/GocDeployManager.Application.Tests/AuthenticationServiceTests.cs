@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using GocDeployManager.Application.Auth;
 using GocDeployManager.Domain.Abstractions;
 using GocDeployManager.Domain.Entities;
@@ -40,6 +41,28 @@ namespace GocDeployManager.Application.Tests
             Assert.That(resultado.IsSuccess, Is.True);
             Assert.That(resultado.Value.Usuario.NombreUsuario, Is.EqualTo("jtorres"));
             Assert.That(resultado.Value.ContrasenaBitbucketEnClaro, Is.EqualTo("clave-bitbucket-en-claro"));
+        }
+
+        [Test]
+        public void IniciarSesion_SiLaCredencialBitbucketNoSePuedeDesprotegerEnEstaMaquina_PermiteElLoginIgual()
+        {
+            // Reproduce el bug real: DPAPI (CurrentUser) fue protegido en otra
+            // máquina/usuario de Windows — Desproteger lanza CryptographicException
+            // ("Clave no válida para utilizar en el estado especificado."). El
+            // login no debe caerse por esto; el operador se entera recién al
+            // intentar desplegar (ContrasenaBitbucketEnClaro queda en null).
+            var usuario = new AppUser("jtorres", "Jorge Torres", RolUsuario.Operador, "hash", "sal");
+            usuario.EstablecerCredencialesBitbucket("jtorres.bb", "protegida-en-otra-maquina");
+
+            _usuarios.Setup(r => r.BuscarPorNombreUsuario("jtorres")).Returns(usuario);
+            _hasher.Setup(h => h.Verificar("clave123", "hash", "sal")).Returns(true);
+            _protector.Setup(p => p.Desproteger("protegida-en-otra-maquina"))
+                .Throws(new CryptographicException("Clave no válida para utilizar en el estado especificado."));
+
+            var resultado = _servicio.IniciarSesion("jtorres", "clave123");
+
+            Assert.That(resultado.IsSuccess, Is.True);
+            Assert.That(resultado.Value.ContrasenaBitbucketEnClaro, Is.Null);
         }
 
         [Test]
