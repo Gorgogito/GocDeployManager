@@ -227,7 +227,11 @@ namespace GocDeployManager.Application.Deploy
         /// </summary>
         private static void ReportarSalidaDeProceso(IProgress<Entidades.MensajeSalidaDespliegue> progreso, string linea)
         {
-            if (progreso == null || string.IsNullOrEmpty(linea))
+            // git y MSBuild emiten líneas en blanco (o solo espacios) como
+            // separadores visuales de su propia salida — MensajeSalidaDespliegue
+            // exige texto no vacío (Guard.ContraNuloOVacio usa IsNullOrWhiteSpace),
+            // así que hay que descartarlas acá, no solo las realmente vacías.
+            if (progreso == null || string.IsNullOrWhiteSpace(linea))
                 return;
 
             var nivel = ParecelineaDeError(linea) ? Entidades.NivelMensajeSalida.Error : Entidades.NivelMensajeSalida.Debug;

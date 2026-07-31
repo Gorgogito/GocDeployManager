@@ -77,6 +77,34 @@ namespace GocDeployManager.Application.Tests
         }
 
         [Test]
+        public void EjecutarDespliegue_SiGitOMsBuildEmitenLineasEnBlanco_NoRompeElReporteDeProgreso()
+        {
+            // Reproduce el bug real: git y MSBuild emiten líneas vacías/con
+            // espacios como separadores visuales de su propia salida, y
+            // MensajeSalidaDespliegue exige texto no vacío — antes de este fix,
+            // una línea así tumbaba el despliegue completo con "El valor no
+            // puede estar vacío. Nombre del parámetro: texto".
+            _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
+                .Callback<string, string, string, string, string, Action<string>>((url, rama, ruta, u, p, onLinea) => onLinea?.Invoke("   "))
+                .Returns(Result.Ok());
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
+                .Callback<PasoDeBuild, string, Action<string>>((paso, ruta, onLinea) => onLinea?.Invoke(string.Empty))
+                .Returns(Result.Ok("compilación correcta"));
+            _deployer.Setup(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<Action<string, bool>>()))
+                .Returns(Result.Ok());
+
+            var mensajes = new List<MensajeSalidaDespliegue>();
+            var progreso = new Progress<MensajeSalidaDespliegue>(mensajes.Add);
+
+            Assert.DoesNotThrow(() =>
+            {
+                var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud(), progreso);
+                Assert.That(resultado.IsSuccess, Is.True);
+            });
+        }
+
+        [Test]
         public void EjecutarDespliegue_SiFallaElClonado_RegistraFalloYNoCompila()
         {
             _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
