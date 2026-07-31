@@ -4,3 +4,6 @@
 - **[Manual del usuario](manual-usuario.html)** — guía paso a paso de configuración y uso diario, con capturas reales de la aplicación.
 
 Ambos son archivos HTML autocontenidos (sin dependencias externas): se pueden abrir directamente con doble clic en cualquier navegador, sin necesidad de servidor.
+
+# Programa
+- ** Para utilizar solamente el programa, obtener la carpeta 'version', el archivo GocDeployManager.UI.exe es el archivo ejecutable del sistema, en el archivo GocDeployManager.UI.exe.config están las configuraciones incluyendo la conexión a la base de datos.
