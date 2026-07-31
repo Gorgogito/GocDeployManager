@@ -60,8 +60,11 @@ namespace GocDeployManager.UI
 
             var appUserRepo = new SqlServerAppUserRepository(CadenaConexionSqlServer);
             var historialRepo = new SqlServerDeployHistoryRepository(CadenaConexionSqlServer);
-            var ambienteRepo = new JsonAmbienteRepository(Path.Combine(RutaConfiguracion, "Ambientes.json"));
-            var sistemaRepo = new JsonSistemaRepository(Path.Combine(RutaConfiguracion, "Sistemas.json"));
+            // Ambientes y sistemas deben ser iguales para todos los usuarios,
+            // no una preferencia por laptop — antes vivían en Ambientes.json/
+            // Sistemas.json (uno por máquina), ahora en SQL Server compartido.
+            var ambienteRepo = new SqlServerAmbienteRepository(CadenaConexionSqlServer);
+            var sistemaRepo = new SqlServerSistemaRepository(CadenaConexionSqlServer);
             var exclusionRepo = new JsonExclusionRulesRepository(Path.Combine(RutaConfiguracion, "ExclusionRules.json"));
 
             var hasher = new Pbkdf2PasswordHasher();

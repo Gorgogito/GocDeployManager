@@ -21,10 +21,12 @@ namespace GocDeployManager.Infrastructure.SqlServer
                 using (var comando = conexion.CreateCommand())
                 {
                     comando.CommandText =
-                        "SELECT COUNT(*) FROM sys.tables WHERE name IN ('AppUser', 'DeployHistory')";
+                        "SELECT COUNT(*) FROM sys.tables WHERE name IN (" +
+                        "'AppUser', 'DeployHistory', " +
+                        "'Ambiente', 'AmbienteSistema', 'ConfiguracionSistema', 'PasoDeBuild')";
 
                     var tablasExistentes = Convert.ToInt32(comando.ExecuteScalar());
-                    if (tablasExistentes < 2)
+                    if (tablasExistentes < 6)
                         throw new InvalidOperationException(
                             "La base de datos no tiene las tablas de GocDeployManager. " +
                             "Ejecuta sql/schema-sql-server.sql contra esta base antes de usar la aplicación.");
