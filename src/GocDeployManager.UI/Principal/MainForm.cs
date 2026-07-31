@@ -40,7 +40,6 @@ namespace GocDeployManager.UI.Principal
         private ComboBoxX _comboAmbiente;
         private Label _lblTema;
         private ComboBoxX _comboTema;
-        private CheckBox _chkModoDetallado;
         private ButtonX _btnIniciarDespliegue;
         private Label _lblError;
         private GroupPanel _grupoSistemas;
@@ -101,7 +100,6 @@ namespace GocDeployManager.UI.Principal
             _lblTema.ForeColor = tema.TextoSecundario;
             _lblError.ForeColor = tema.Peligro;
             _lblEtapaActual.ForeColor = tema.TextoPrimario;
-            _chkModoDetallado.ForeColor = tema.TextoSecundario;
 
             foreach (var chk in _checkboxesSistema)
                 chk.ForeColor = tema.TextoPrimario;
@@ -152,13 +150,6 @@ namespace GocDeployManager.UI.Principal
             _comboTema.SelectedItem = ThemeManager.Actual == Theme.Oscuro ? "Oscuro" : "Claro";
             _comboTema.SelectedIndexChanged += ComboTema_SelectedIndexChanged;
 
-            _chkModoDetallado = new CheckBox
-            {
-                Text = "Modo detallado",
-                AutoSize = true,
-                ForeColor = tema.TextoSecundario,
-            };
-
             _ribbon.AgregarControl(_lblGoc);
             _ribbon.AgregarControl(_txtGoc);
             _ribbon.AgregarControl(_lblAmbiente);
@@ -168,8 +159,6 @@ namespace GocDeployManager.UI.Principal
             _ribbon.AgregarSeparador();
             _ribbon.AgregarControl(_lblTema);
             _ribbon.AgregarControl(_comboTema);
-            _ribbon.AgregarSeparador();
-            _ribbon.AgregarControl(_chkModoDetallado);
 
             if (!_sesion.Usuario.PuedeDesplegar)
             {
@@ -427,15 +416,16 @@ namespace GocDeployManager.UI.Principal
         /// Único punto donde el panel de salida traduce un mensaje del
         /// orquestador a una fila visual — separador de etapa si trae
         /// <see cref="MensajeSalidaDespliegue.Etapa"/>, línea coloreada por
-        /// severidad si no. Los mensajes Debug (streaming crudo de git/MSBuild
-        /// y archivo por archivo de la copia) solo se muestran en modo
-        /// detallado, para no saturar la vista normal.
+        /// severidad si no. El panel de abajo (<see cref="_log"/>) muestra
+        /// SIEMPRE el detalle completo línea por línea, como la ventana
+        /// Salida de Visual Studio — el indicador de arriba ("Progreso del
+        /// despliegue"), en cambio, se queda solo con la etapa gruesa
+        /// (Clonando/Compilando/Copiando), ignorando el streaming crudo de
+        /// git/MSBuild y la copia archivo por archivo (nivel Debug), para no
+        /// volverse ilegible.
         /// </summary>
         private void MostrarMensajeSalida(MensajeSalidaDespliegue mensaje)
         {
-            if (mensaje.Nivel == NivelMensajeSalida.Debug && !_chkModoDetallado.Checked)
-                return;
-
             var tema = ThemeManager.Actual;
 
             if (mensaje.Etapa.HasValue)
@@ -454,8 +444,11 @@ namespace GocDeployManager.UI.Principal
                     PrefijoParaNivel(mensaje.Nivel) + mensaje.Texto);
             }
 
-            _statusBar.TextoIzquierda = mensaje.Texto;
-            _lblEtapaActual.Text = mensaje.Texto;
+            if (mensaje.Nivel != NivelMensajeSalida.Debug)
+            {
+                _statusBar.TextoIzquierda = mensaje.Texto;
+                _lblEtapaActual.Text = mensaje.Texto;
+            }
         }
 
         private static Color ColorParaNivel(Theme tema, NivelMensajeSalida nivel)
