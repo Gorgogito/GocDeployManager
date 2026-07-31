@@ -4,8 +4,9 @@ using GocDeployManager.Domain.Entities;
 namespace GocDeployManager.Domain.Abstractions
 {
     /// <summary>
-    /// Persistencia de Ambientes.json. Reemplaza la lista completa al guardar,
-    /// igual que hoy se edita el archivo entero.
+    /// Persistencia de ambientes (tablas Ambiente/AmbienteSistema en SQL
+    /// Server, compartidas por todos los usuarios). Reemplaza la lista
+    /// completa al guardar.
     /// </summary>
     public interface IAmbienteRepository
     {

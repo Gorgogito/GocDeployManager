@@ -6,8 +6,10 @@ namespace GocDeployManager.Domain.Abstractions
 {
     /// <summary>
     /// Catálogo de sistemas conocidos (SIT, IDI, ProPag, ...) y su configuración
-    /// de compilación/repositorio (Sistemas.json). Un sistema sin configuración
-    /// (ej. uno recién dado de alta) es un escenario esperado, no una excepción.
+    /// de compilación/repositorio (tablas ConfiguracionSistema/PasoDeBuild en
+    /// SQL Server, compartidas por todos los usuarios). Un sistema sin
+    /// configuración (ej. uno recién dado de alta) es un escenario esperado,
+    /// no una excepción.
     /// </summary>
     public interface ISistemaRepository
     {
