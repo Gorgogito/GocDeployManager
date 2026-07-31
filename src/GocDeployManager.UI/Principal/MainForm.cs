@@ -418,11 +418,12 @@ namespace GocDeployManager.UI.Principal
         /// <see cref="MensajeSalidaDespliegue.Etapa"/>, línea coloreada por
         /// severidad si no. El panel de abajo (<see cref="_log"/>) muestra
         /// SIEMPRE el detalle completo línea por línea, como la ventana
-        /// Salida de Visual Studio — el indicador de arriba ("Progreso del
-        /// despliegue"), en cambio, se queda solo con la etapa gruesa
-        /// (Clonando/Compilando/Copiando), ignorando el streaming crudo de
-        /// git/MSBuild y la copia archivo por archivo (nivel Debug), para no
-        /// volverse ilegible.
+        /// Salida de Visual Studio, sin filtrar nada — el indicador de arriba
+        /// ("Progreso del despliegue"), en cambio, solo se actualiza con los
+        /// mensajes marcados <see cref="MensajeSalidaDespliegue.EsResumen"/>
+        /// (resolviendo configuración, clonando, cada paso de compilación,
+        /// copiando archivos, y el cierre final) — exactamente los mismos
+        /// hitos que mostraba el indicador de progreso antes de este panel.
         /// </summary>
         private void MostrarMensajeSalida(MensajeSalidaDespliegue mensaje)
         {
@@ -444,7 +445,7 @@ namespace GocDeployManager.UI.Principal
                     PrefijoParaNivel(mensaje.Nivel) + mensaje.Texto);
             }
 
-            if (mensaje.Nivel != NivelMensajeSalida.Debug)
+            if (mensaje.EsResumen)
             {
                 _statusBar.TextoIzquierda = mensaje.Texto;
                 _lblEtapaActual.Text = mensaje.Texto;

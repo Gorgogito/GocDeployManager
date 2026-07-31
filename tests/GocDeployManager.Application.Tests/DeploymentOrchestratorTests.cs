@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GocDeployManager.Application.Deploy;
 using GocDeployManager.Common;
 using GocDeployManager.Domain.Abstractions;
@@ -74,6 +75,47 @@ namespace GocDeployManager.Application.Tests
 
             Assert.That(resultado.IsSuccess, Is.True);
             _historial.Verify(h => h.Registrar(It.Is<Despliegue>(d => d.Resultado == ResultadoDespliegue.Exitoso)), Times.Once);
+        }
+
+        [Test]
+        public void EjecutarDespliegue_CaminoFeliz_SoloMarcaComoResumenLosHitosDeAltoNivel()
+        {
+            // El indicador de "Progreso del despliegue" (arriba, en la UI)
+            // debe mostrar exactamente los mismos hitos que mostraba antes de
+            // que existiera el panel de salida detallado: resolviendo
+            // configuración, clonando, cada paso de compilación, copiando
+            // archivos, y el cierre final — nada de las confirmaciones
+            // intermedias (Success) ni de los separadores de etapa, que solo
+            // van al panel de abajo.
+            _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
+                .Returns(Result.Ok());
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
+                .Returns(Result.Ok("compilación correcta"));
+            _deployer.Setup(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<Action<string, bool>>()))
+                .Returns(Result.Ok());
+
+            var mensajes = new List<MensajeSalidaDespliegue>();
+            var progreso = new Mock<IProgress<MensajeSalidaDespliegue>>();
+            progreso.Setup(p => p.Report(It.IsAny<MensajeSalidaDespliegue>())).Callback<MensajeSalidaDespliegue>(m => mensajes.Add(m));
+
+            var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud(), progreso.Object);
+
+            Assert.That(resultado.IsSuccess, Is.True);
+
+            var resumen = mensajes.Where(m => m.EsResumen).Select(m => m.Texto).ToList();
+            Assert.That(resumen, Has.Count.EqualTo(6));
+            Assert.That(resumen[0], Is.EqualTo("[SIT] Resolviendo configuración..."));
+            Assert.That(resumen[1], Is.EqualTo("[SIT] Clonando/actualizando repositorio..."));
+            Assert.That(resumen[2], Is.EqualTo("[SIT] Compilando Sit.BusinessEntities..."));
+            Assert.That(resumen[3], Is.EqualTo("[SIT] Compilando SITSolution..."));
+            Assert.That(resumen[4], Is.EqualTo("[SIT] Preparando archivos..."));
+            Assert.That(resumen[5], Does.StartWith("Despliegue finalizado correctamente."));
+
+            // Ninguno de los separadores de etapa ni las confirmaciones
+            // intermedias deben colarse como resumen.
+            Assert.That(mensajes.Any(m => m.Etapa.HasValue && m.EsResumen), Is.False);
+            Assert.That(mensajes.Any(m => m.Texto == "[SIT] Configuración válida." && m.EsResumen), Is.False);
         }
 
         [Test]

@@ -59,7 +59,7 @@ namespace GocDeployManager.Application.Deploy
             foreach (var sistema in solicitud.Sistemas)
             {
                 ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Validacion, $"VALIDACIÓN — {sistema.Nombre}");
-                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Resolviendo configuración...");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Resolviendo configuración...", esResumen: true);
 
                 var configuracionResultado = _sistemas.ObtenerConfiguracion(sistema);
                 if (configuracionResultado.IsFailure)
@@ -97,7 +97,7 @@ namespace GocDeployManager.Application.Deploy
 
                 ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Clonado, $"CLONADO — {sistema.Nombre}");
                 Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Rama: {solicitud.Goc.RamaBitbucket}");
-                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Clonando/actualizando repositorio...");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Clonando/actualizando repositorio...", esResumen: true);
 
                 var clonado = _git.ClonarORama(
                     configuracion.RepositorioUrl, solicitud.Goc.RamaBitbucket, rutaTrabajo,
@@ -118,7 +118,7 @@ namespace GocDeployManager.Application.Deploy
                 cronometroCompilacion.Start();
                 foreach (var paso in configuracion.SecuenciaDeBuild.Pasos)
                 {
-                    Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Compilando {paso.CarpetaProyecto}...");
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Compilando {paso.CarpetaProyecto}...", esResumen: true);
                     var build = _msbuild.EjecutarPaso(paso, rutaTrabajo, linea => ReportarSalidaDeProceso(progreso, linea));
 
                     if (build.IsFailure)
@@ -135,7 +135,7 @@ namespace GocDeployManager.Application.Deploy
                 cronometroCompilacion.Stop();
 
                 ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Despliegue, $"DESPLIEGUE — {sistema.Nombre}");
-                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Preparando archivos...");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Preparando archivos...", esResumen: true);
                 string rutaPrecompilada;
                 try
                 {
@@ -182,7 +182,8 @@ namespace GocDeployManager.Application.Deploy
             ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Finalizacion, "FINALIZACIÓN");
             Reportar(progreso, Entidades.NivelMensajeSalida.Success,
                 $"Despliegue finalizado correctamente. GOC: {solicitud.Goc.Numero} · Ambiente: {solicitud.Ambiente.Nombre} · " +
-                $"Sistemas: {string.Join(", ", solicitud.Sistemas.Select(s => s.Codigo))} · Duración: {cronometroTotal.Elapsed:hh\\:mm\\:ss}.");
+                $"Sistemas: {string.Join(", ", solicitud.Sistemas.Select(s => s.Codigo))} · Duración: {cronometroTotal.Elapsed:hh\\:mm\\:ss}.",
+                esResumen: true);
 
             var despliegueExitoso = Entidades.Despliegue.RegistrarExitoso(
                 solicitud.UsuarioAplicacion, solicitud.UsuarioWindows, solicitud.Equipo,
@@ -200,7 +201,8 @@ namespace GocDeployManager.Application.Deploy
         {
             ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Finalizacion, "FINALIZACIÓN");
             Reportar(progreso, Entidades.NivelMensajeSalida.Error,
-                $"Despliegue finalizado con errores. GOC: {solicitud.Goc.Numero} · Etapa: {etapaTexto} · Error: {PrimeraLinea(error)}");
+                $"Despliegue finalizado con errores. GOC: {solicitud.Goc.Numero} · Etapa: {etapaTexto} · Error: {PrimeraLinea(error)}",
+                esResumen: true);
 
             var despliegueFallido = Entidades.Despliegue.RegistrarFallido(
                 solicitud.UsuarioAplicacion, solicitud.UsuarioWindows, solicitud.Equipo,
@@ -212,8 +214,8 @@ namespace GocDeployManager.Application.Deploy
             return Result.Fail(error);
         }
 
-        private static void Reportar(IProgress<Entidades.MensajeSalidaDespliegue> progreso, Entidades.NivelMensajeSalida nivel, string texto) =>
-            progreso?.Report(Entidades.MensajeSalidaDespliegue.Crear(nivel, texto));
+        private static void Reportar(IProgress<Entidades.MensajeSalidaDespliegue> progreso, Entidades.NivelMensajeSalida nivel, string texto, bool esResumen = false) =>
+            progreso?.Report(Entidades.MensajeSalidaDespliegue.Crear(nivel, texto, esResumen));
 
         private static void ReportarInicioEtapa(IProgress<Entidades.MensajeSalidaDespliegue> progreso, Entidades.EtapaProgreso etapa, string texto) =>
             progreso?.Report(Entidades.MensajeSalidaDespliegue.InicioDeEtapa(etapa, texto));
@@ -221,9 +223,9 @@ namespace GocDeployManager.Application.Deploy
         /// <summary>
         /// Streaming en vivo de una línea de stdout/stderr de git.exe o
         /// MSBuild.exe: se clasifica como Error si tiene pinta de serlo
-        /// ("fatal:", "error CSxxxx", etc.), si no como Debug (solo visible en
-        /// modo detallado) — evita duplicar el resumen final con todo el log
-        /// crudo del proceso.
+        /// ("fatal:", "error CSxxxx", etc.), si no como Debug — nunca marcado
+        /// como resumen, así que solo llega al panel de salida detallado, no
+        /// al indicador de "Progreso del despliegue".
         /// </summary>
         private static void ReportarSalidaDeProceso(IProgress<Entidades.MensajeSalidaDespliegue> progreso, string linea)
         {

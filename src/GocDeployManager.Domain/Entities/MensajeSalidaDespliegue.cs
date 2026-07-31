@@ -21,18 +21,30 @@ namespace GocDeployManager.Domain.Entities
         /// </summary>
         public EtapaProgreso? Etapa { get; }
 
-        private MensajeSalidaDespliegue(DateTime momento, NivelMensajeSalida nivel, string texto, EtapaProgreso? etapa)
+        /// <summary>
+        /// True solo en los hitos de alto nivel equivalentes a lo que
+        /// mostraba el indicador de progreso antes de este panel (resolviendo
+        /// configuración, clonando, cada paso de compilación, copiando
+        /// archivos, y el cierre final) — la UI usa esta marca para decidir
+        /// qué mensajes llegan al indicador de "Progreso del despliegue"
+        /// (arriba), a diferencia del panel de salida (abajo), que siempre
+        /// recibe todos los mensajes sin filtrar.
+        /// </summary>
+        public bool EsResumen { get; }
+
+        private MensajeSalidaDespliegue(DateTime momento, NivelMensajeSalida nivel, string texto, EtapaProgreso? etapa, bool esResumen)
         {
             Momento = momento;
             Nivel = nivel;
             Texto = Guard.ContraNuloOVacio(texto, nameof(texto));
             Etapa = etapa;
+            EsResumen = esResumen;
         }
 
-        public static MensajeSalidaDespliegue Crear(NivelMensajeSalida nivel, string texto) =>
-            new MensajeSalidaDespliegue(DateTime.Now, nivel, texto, null);
+        public static MensajeSalidaDespliegue Crear(NivelMensajeSalida nivel, string texto, bool esResumen = false) =>
+            new MensajeSalidaDespliegue(DateTime.Now, nivel, texto, null, esResumen);
 
         public static MensajeSalidaDespliegue InicioDeEtapa(EtapaProgreso etapa, string texto) =>
-            new MensajeSalidaDespliegue(DateTime.Now, NivelMensajeSalida.Info, texto, etapa);
+            new MensajeSalidaDespliegue(DateTime.Now, NivelMensajeSalida.Info, texto, etapa, esResumen: false);
     }
 }

@@ -17,6 +17,22 @@ namespace GocDeployManager.Domain.Tests
         }
 
         [Test]
+        public void Crear_PorDefectoNoEsResumen()
+        {
+            var mensaje = MensajeSalidaDespliegue.Crear(NivelMensajeSalida.Debug, "Cloning into 'IN-SIT'...");
+
+            Assert.That(mensaje.EsResumen, Is.False);
+        }
+
+        [Test]
+        public void Crear_PuedeMarcarseComoResumen()
+        {
+            var mensaje = MensajeSalidaDespliegue.Crear(NivelMensajeSalida.Info, "Compilando Sit.BusinessEntities...", esResumen: true);
+
+            Assert.That(mensaje.EsResumen, Is.True);
+        }
+
+        [Test]
         public void InicioDeEtapa_MarcaLaEtapaYUsaNivelInfo()
         {
             var mensaje = MensajeSalidaDespliegue.InicioDeEtapa(EtapaProgreso.Clonado, "CLONADO — SIT");
@@ -24,6 +40,7 @@ namespace GocDeployManager.Domain.Tests
             Assert.That(mensaje.Etapa, Is.EqualTo(EtapaProgreso.Clonado));
             Assert.That(mensaje.Nivel, Is.EqualTo(NivelMensajeSalida.Info));
             Assert.That(mensaje.Texto, Is.EqualTo("CLONADO — SIT"));
+            Assert.That(mensaje.EsResumen, Is.False);
         }
 
         [Test]
