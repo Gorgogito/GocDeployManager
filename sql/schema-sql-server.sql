@@ -52,8 +52,7 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Ambiente')
 BEGIN
     CREATE TABLE Ambiente (
-        Nombre                      NVARCHAR(100)   NOT NULL PRIMARY KEY,
-        NotificacionesHabilitadas   BIT             NOT NULL DEFAULT 1
+        Nombre                      NVARCHAR(100)   NOT NULL PRIMARY KEY
     );
 END
 GO

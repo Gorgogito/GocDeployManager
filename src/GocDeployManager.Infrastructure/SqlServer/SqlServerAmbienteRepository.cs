@@ -26,21 +26,19 @@ namespace GocDeployManager.Infrastructure.SqlServer
         public IReadOnlyList<Ambiente> ObtenerTodos()
         {
             var ordenAmbientes = new List<string>();
-            var notificacionesPorAmbiente = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             var sistemasPorAmbiente = new Dictionary<string, List<AmbienteSistema>>(StringComparer.OrdinalIgnoreCase);
 
             using (var conexion = AbrirConexion())
             {
                 using (var comando = conexion.CreateCommand())
                 {
-                    comando.CommandText = "SELECT Nombre, NotificacionesHabilitadas FROM Ambiente ORDER BY Nombre";
+                    comando.CommandText = "SELECT Nombre FROM Ambiente ORDER BY Nombre";
                     using (var lector = comando.ExecuteReader())
                     {
                         while (lector.Read())
                         {
                             var nombre = (string)lector["Nombre"];
                             ordenAmbientes.Add(nombre);
-                            notificacionesPorAmbiente[nombre] = (bool)lector["NotificacionesHabilitadas"];
                             sistemasPorAmbiente[nombre] = new List<AmbienteSistema>();
                         }
                     }
@@ -65,7 +63,7 @@ namespace GocDeployManager.Infrastructure.SqlServer
             }
 
             return ordenAmbientes
-                .Select(nombre => new Ambiente(nombre, sistemasPorAmbiente[nombre], notificacionesPorAmbiente[nombre]))
+                .Select(nombre => new Ambiente(nombre, sistemasPorAmbiente[nombre]))
                 .ToList()
                 .AsReadOnly();
         }
@@ -85,9 +83,8 @@ namespace GocDeployManager.Infrastructure.SqlServer
                     using (var comando = conexion.CreateCommand())
                     {
                         comando.Transaction = transaccion;
-                        comando.CommandText = "INSERT INTO Ambiente (Nombre, NotificacionesHabilitadas) VALUES (@nombre, @notificaciones)";
+                        comando.CommandText = "INSERT INTO Ambiente (Nombre) VALUES (@nombre)";
                         comando.Parameters.AddWithValue("@nombre", ambiente.Nombre);
-                        comando.Parameters.AddWithValue("@notificaciones", ambiente.NotificacionesHabilitadas);
                         comando.ExecuteNonQuery();
                     }
 

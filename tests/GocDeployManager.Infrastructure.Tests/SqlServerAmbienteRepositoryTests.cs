@@ -1,4 +1,3 @@
-using System.Linq;
 using GocDeployManager.Domain.Entities;
 using GocDeployManager.Infrastructure.SqlServer;
 using NUnit.Framework;
@@ -31,25 +30,6 @@ namespace GocDeployManager.Infrastructure.Tests
                 Assert.That(recuperados[0].Nombre, Is.EqualTo("Desarrollo"));
                 Assert.That(recuperados[0].Sistemas, Has.Count.EqualTo(2));
                 Assert.That(recuperados[0].BuscarSistema(sit).RutaDestino, Is.EqualTo(@"\\Sdpeapp00009\Aplicaciones\SIT"));
-            }
-        }
-
-        [Test]
-        public void GuardarYObtenerTodos_PreservaNotificacionesHabilitadas()
-        {
-            using (var baseDeDatos = new BaseDeDatosSqlServerDePrueba())
-            {
-                var repositorio = new SqlServerAmbienteRepository(baseDeDatos.CadenaConexion);
-                var sit = new Sistema("SIT", "SIT");
-
-                var desarrollo = new Ambiente("Desarrollo", new[] { new AmbienteSistema(sit, @"C:\Desarrollo") }, notificacionesHabilitadas: false);
-                var testing = new Ambiente("Testing", new[] { new AmbienteSistema(sit, @"C:\Testing") });
-
-                repositorio.Guardar(new[] { desarrollo, testing });
-                var recuperados = repositorio.ObtenerTodos();
-
-                Assert.That(recuperados.Single(a => a.Nombre == "Desarrollo").NotificacionesHabilitadas, Is.False);
-                Assert.That(recuperados.Single(a => a.Nombre == "Testing").NotificacionesHabilitadas, Is.True);
             }
         }
 
