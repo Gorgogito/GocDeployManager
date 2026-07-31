@@ -89,8 +89,12 @@ namespace DesktopComponents.Controls
                     var estadoClip = g.Save();
                     g.SetClip(rutaPista);
 
-                    using (var pincelRelleno = new SolidBrush(tema.Acento))
-                        g.FillRectangle(pincelRelleno, new Rectangle(0, 0, anchoRelleno, Height));
+                    var rectRelleno = new Rectangle(0, 0, anchoRelleno, Height);
+                    using (var pincelRelleno = Dibujo.PincelDegradado(
+                        rectRelleno, Theme.Mezclar(tema.Acento, Color.White, 0.25f), tema.Acento))
+                    {
+                        g.FillRectangle(pincelRelleno, rectRelleno);
+                    }
 
                     g.Restore(estadoClip);
                 }

@@ -99,9 +99,11 @@ namespace DesktopComponents.Controls
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
-            using (var pincel = new SolidBrush(colorFondo))
+            using (var pincel = Dibujo.PincelDegradado(rect, Theme.Mezclar(colorFondo, Color.White, 0.18f), colorFondo))
+            using (var lapizBorde = new Pen(Theme.Mezclar(colorFondo, Color.Black, 0.2f)))
             {
                 g.FillPath(pincel, ruta);
+                g.DrawPath(lapizBorde, ruta);
             }
 
             TextRenderer.DrawText(g, Text, Font, ClientRectangle, Color.White,

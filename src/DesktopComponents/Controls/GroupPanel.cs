@@ -62,7 +62,7 @@ namespace DesktopComponents.Controls
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
-            using (var pincelFondo = new SolidBrush(tema.Superficie))
+            using (var pincelFondo = Dibujo.PincelDegradado(rect, Theme.Mezclar(tema.Superficie, Color.White, 0.5f), tema.Superficie))
             using (var lapizBorde = new Pen(tema.Borde))
             {
                 e.Graphics.FillPath(pincelFondo, ruta);

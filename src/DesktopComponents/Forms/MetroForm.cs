@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using DesktopComponents.Theming;
@@ -16,6 +17,7 @@ namespace DesktopComponents.Forms
     public class MetroForm : Form, IThemedControl
     {
         private const int AltoBarraTituloLogico = 36;
+        private const int CS_DROPSHADOW = 0x00020000;
         private const int WM_NCHITTEST = 0x84;
         private const int WM_LBUTTONDBLCLK = 0x203;
         private const int WM_GETMINMAXINFO = 0x24;
@@ -37,6 +39,7 @@ namespace DesktopComponents.Forms
         private bool _cerrarHover;
         private bool _minimizarHover;
         private bool _maximizarHover;
+        private bool _ventanaActiva = true;
 
         /// <summary>
         /// Si es <c>true</c>, la ventana agrega un botón maximizar/restaurar,
@@ -48,6 +51,22 @@ namespace DesktopComponents.Forms
         /// </summary>
         public bool Redimensionable { get; set; }
 
+        /// <summary>
+        /// Agrega la sombra nativa de Windows/DWM alrededor de la ventana.
+        /// Con <see cref="FormBorderStyle.None"/>, WinForms no la dibuja
+        /// gratis como con un borde nativo — sin esto, dos ventanas
+        /// superpuestas de este mismo tono son casi indistinguibles entre sí.
+        /// </summary>
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var parametros = base.CreateParams;
+                parametros.ClassStyle |= CS_DROPSHADOW;
+                return parametros;
+            }
+        }
+
         public MetroForm()
         {
             SetStyle(
@@ -58,6 +77,13 @@ namespace DesktopComponents.Forms
             FormBorderStyle = FormBorderStyle.None;
             Font = new Font("Segoe UI", 9.5f);
             Padding = new Padding(0, LogicalToDeviceUnits(AltoBarraTituloLogico), 0, 0);
+
+            // Como ninguna pantalla usa un .resx con Designer, WinForms no
+            // toma sola el ícono de la aplicación (ApplicationIcon del
+            // .csproj) para el título/la barra de tareas — hay que
+            // asignárselo. Se hace una sola vez acá porque todas las
+            // pantallas heredan de MetroForm.
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
             _suscripcionTema = new SuscripcionTema(AplicarTema);
         }
@@ -82,6 +108,27 @@ namespace DesktopComponents.Forms
             AplicarTema(ThemeManager.Actual);
         }
 
+        /// <summary>
+        /// El borde se pinta con el color de acento (más grueso) cuando la
+        /// ventana tiene el foco, y con el color neutro de siempre cuando no
+        /// lo tiene — igual que el borde activo/inactivo de MetroForm en
+        /// DevComponents. Ayuda a distinguir cuál ventana está "encima"
+        /// cuando hay varias superpuestas.
+        /// </summary>
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            _ventanaActiva = true;
+            Invalidate();
+        }
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            base.OnDeactivate(e);
+            _ventanaActiva = false;
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -89,8 +136,12 @@ namespace DesktopComponents.Forms
             var tema = ThemeManager.Actual;
             var altoBarra = LogicalToDeviceUnits(AltoBarraTituloLogico);
 
-            using (var pincelBarra = new SolidBrush(tema.Superficie))
-                e.Graphics.FillRectangle(pincelBarra, new Rectangle(0, 0, Width, altoBarra));
+            var rectBarra = new Rectangle(0, 0, Math.Max(1, Width), altoBarra);
+            using (var pincelBarra = new LinearGradientBrush(
+                rectBarra, Theme.Mezclar(tema.Superficie, Color.White, 0.35f), tema.Superficie, LinearGradientMode.Vertical))
+            {
+                e.Graphics.FillRectangle(pincelBarra, rectBarra);
+            }
 
             TextRenderer.DrawText(
                 e.Graphics, Text, Font,
@@ -116,8 +167,11 @@ namespace DesktopComponents.Forms
             if (Redimensionable)
                 DibujarBotonVentana(e.Graphics, _rectBotonMaximizar, WindowState == FormWindowState.Maximized ? "❐" : "□", _maximizarHover, tema.Acento, tema);
 
-            using (var lapizBorde = new Pen(tema.Borde))
-                e.Graphics.DrawRectangle(lapizBorde, new Rectangle(0, 0, Width - 1, Height - 1));
+            var colorBorde = _ventanaActiva ? tema.Acento : tema.Borde;
+            var grosorBorde = _ventanaActiva ? 2 : 1;
+            var mitad = grosorBorde / 2;
+            using (var lapizBorde = new Pen(colorBorde, grosorBorde))
+                e.Graphics.DrawRectangle(lapizBorde, new Rectangle(mitad, mitad, Width - 1 - mitad, Height - 1 - mitad));
         }
 
         private static void DibujarBotonVentana(Graphics g, Rectangle rect, string simbolo, bool hover, Color colorHover, Theme tema)

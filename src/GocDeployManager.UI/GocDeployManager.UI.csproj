@@ -8,6 +8,7 @@
     <Nullable>disable</Nullable>
     <RootNamespace>GocDeployManager.UI</RootNamespace>
     <AssemblyName>GocDeployManager.UI</AssemblyName>
+    <ApplicationIcon>assembly.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
