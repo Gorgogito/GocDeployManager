@@ -21,7 +21,7 @@ namespace GocDeployManager.Infrastructure.Build
             _rutaMsBuildExe = Guard.ContraNuloOVacio(rutaMsBuildExe, nameof(rutaMsBuildExe));
         }
 
-        public Result<string> EjecutarPaso(PasoDeBuild paso, string rutaBase)
+        public Result<string> EjecutarPaso(PasoDeBuild paso, string rutaBase, Action<string> onLineaSalida = null)
         {
             Guard.ContraNulo(paso, nameof(paso));
             Guard.ContraNuloOVacio(rutaBase, nameof(rutaBase));
@@ -50,8 +50,16 @@ namespace GocDeployManager.Infrastructure.Build
                 using (var proceso = new Process { StartInfo = infoProceso })
                 {
                     var salida = new StringBuilder();
-                    proceso.OutputDataReceived += (s, e) => { if (e.Data != null) salida.AppendLine(e.Data); };
-                    proceso.ErrorDataReceived += (s, e) => { if (e.Data != null) salida.AppendLine(e.Data); };
+                    DataReceivedEventHandler alRecibirLinea = (s, e) =>
+                    {
+                        if (e.Data == null)
+                            return;
+
+                        salida.AppendLine(e.Data);
+                        onLineaSalida?.Invoke(e.Data);
+                    };
+                    proceso.OutputDataReceived += alRecibirLinea;
+                    proceso.ErrorDataReceived += alRecibirLinea;
 
                     proceso.Start();
                     proceso.BeginOutputReadLine();

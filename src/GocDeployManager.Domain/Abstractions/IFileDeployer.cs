@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GocDeployManager.Common;
 
@@ -9,6 +10,10 @@ namespace GocDeployManager.Domain.Abstractions
     /// </summary>
     public interface IFileDeployer
     {
-        Result Copiar(string rutaOrigen, string rutaDestino, IReadOnlyList<string> patronesExclusion);
+        /// <param name="onArchivo">
+        /// Invocado por cada archivo procesado (nombre, si se omitió por
+        /// exclusión) — panel de salida en tiempo real. Opcional.
+        /// </param>
+        Result Copiar(string rutaOrigen, string rutaDestino, IReadOnlyList<string> patronesExclusion, Action<string, bool> onArchivo = null);
     }
 }

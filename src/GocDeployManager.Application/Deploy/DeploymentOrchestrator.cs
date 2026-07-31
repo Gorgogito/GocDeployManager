@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using GocDeployManager.Common;
 using GocDeployManager.Domain.Abstractions;
 using Entidades = GocDeployManager.Domain.Entities;
@@ -17,6 +18,8 @@ namespace GocDeployManager.Application.Deploy
     /// </summary>
     public sealed class DeploymentOrchestrator
     {
+        private static readonly Regex PatronLineaDeError = new Regex(@"\berror\b", RegexOptions.IgnoreCase);
+
         private readonly IGitClient _git;
         private readonly IMsBuildRunner _msbuild;
         private readonly IFileDeployer _deployer;
@@ -43,10 +46,11 @@ namespace GocDeployManager.Application.Deploy
             _logger = Guard.ContraNulo(logger, nameof(logger));
         }
 
-        public Result EjecutarDespliegue(SolicitudDespliegue solicitud, IProgress<string> progreso = null)
+        public Result EjecutarDespliegue(SolicitudDespliegue solicitud, IProgress<Entidades.MensajeSalidaDespliegue> progreso = null)
         {
             Guard.ContraNulo(solicitud, nameof(solicitud));
 
+            var cronometroTotal = Stopwatch.StartNew();
             var cronometroCompilacion = new Stopwatch();
             var cronometroDespliegue = new Stopwatch();
 
@@ -54,17 +58,26 @@ namespace GocDeployManager.Application.Deploy
 
             foreach (var sistema in solicitud.Sistemas)
             {
-                progreso?.Report($"[{sistema.Nombre}] Resolviendo configuración...");
+                ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Validacion, $"VALIDACIÓN — {sistema.Nombre}");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Resolviendo configuración...");
 
                 var configuracionResultado = _sistemas.ObtenerConfiguracion(sistema);
                 if (configuracionResultado.IsFailure)
+                {
+                    var error = $"[{sistema.Nombre}] {configuracionResultado.Error}";
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                     return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                        $"[{sistema.Nombre}] {configuracionResultado.Error}");
+                        progreso, "Validación", error);
+                }
 
                 var ambienteSistema = solicitud.Ambiente.BuscarSistema(sistema);
                 if (ambienteSistema == null)
+                {
+                    var error = $"El ambiente '{solicitud.Ambiente.Nombre}' no tiene configurada una ruta para {sistema.Nombre}.";
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                     return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                        $"El ambiente '{solicitud.Ambiente.Nombre}' no tiene configurada una ruta para {sistema.Nombre}.");
+                        progreso, "Validación", error);
+                }
 
                 var configuracion = configuracionResultado.Value;
                 string rutaTrabajo;
@@ -74,35 +87,55 @@ namespace GocDeployManager.Application.Deploy
                 }
                 catch (ArgumentException ex)
                 {
+                    var error = $"[{sistema.Nombre}] El código de sistema configurado tiene caracteres inválidos para una ruta (revisá Configuración › Bitbucket): {ex.Message}";
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                     return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                        $"[{sistema.Nombre}] El código de sistema configurado tiene caracteres inválidos para una ruta (revisá Configuración › Bitbucket): {ex.Message}");
+                        progreso, "Validación", error);
                 }
 
-                progreso?.Report($"[{sistema.Nombre}] Clonando {solicitud.Goc.RamaBitbucket}...");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Success, $"[{sistema.Nombre}] Configuración válida.");
+
+                ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Clonado, $"CLONADO — {sistema.Nombre}");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Rama: {solicitud.Goc.RamaBitbucket}");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Clonando/actualizando repositorio...");
+
                 var clonado = _git.ClonarORama(
                     configuracion.RepositorioUrl, solicitud.Goc.RamaBitbucket, rutaTrabajo,
-                    solicitud.UsuarioBitbucket, solicitud.ContrasenaBitbucket);
+                    solicitud.UsuarioBitbucket, solicitud.ContrasenaBitbucket,
+                    linea => ReportarSalidaDeProceso(progreso, linea));
 
                 if (clonado.IsFailure)
+                {
+                    var error = $"[{sistema.Nombre}] Clonado: {PrimeraLinea(clonado.Error)}";
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                     return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                        $"[{sistema.Nombre}] Clonado: {clonado.Error}");
+                        progreso, "Clonado", $"[{sistema.Nombre}] Clonado: {clonado.Error}");
+                }
 
+                Reportar(progreso, Entidades.NivelMensajeSalida.Success, $"[{sistema.Nombre}] Clonado finalizado correctamente.");
+
+                ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Compilacion, $"COMPILACIÓN — {sistema.Nombre}");
                 cronometroCompilacion.Start();
                 foreach (var paso in configuracion.SecuenciaDeBuild.Pasos)
                 {
-                    progreso?.Report($"[{sistema.Nombre}] Compilando {paso.CarpetaProyecto}...");
-                    var build = _msbuild.EjecutarPaso(paso, rutaTrabajo);
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Compilando {paso.CarpetaProyecto}...");
+                    var build = _msbuild.EjecutarPaso(paso, rutaTrabajo, linea => ReportarSalidaDeProceso(progreso, linea));
 
                     if (build.IsFailure)
                     {
                         cronometroCompilacion.Stop();
+                        var error = $"[{sistema.Nombre}] Build ({paso.CarpetaProyecto}): {PrimeraLinea(build.Error)}";
+                        Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                         return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                            $"[{sistema.Nombre}] Build ({paso.CarpetaProyecto}): {build.Error}");
+                            progreso, "Compilación", $"[{sistema.Nombre}] Build ({paso.CarpetaProyecto}): {build.Error}");
                     }
+
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Success, $"[{sistema.Nombre}] {paso.CarpetaProyecto}: OK");
                 }
                 cronometroCompilacion.Stop();
 
-                progreso?.Report($"[{sistema.Nombre}] Copiando archivos...");
+                ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Despliegue, $"DESPLIEGUE — {sistema.Nombre}");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Preparando archivos...");
                 string rutaPrecompilada;
                 try
                 {
@@ -110,21 +143,46 @@ namespace GocDeployManager.Application.Deploy
                 }
                 catch (ArgumentException ex)
                 {
+                    var error = $"[{sistema.Nombre}] La carpeta precompilada configurada tiene caracteres inválidos para una ruta (revisá Configuración › Bitbucket): {ex.Message}";
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                     return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                        $"[{sistema.Nombre}] La carpeta precompilada configurada tiene caracteres inválidos para una ruta (revisá Configuración › Bitbucket): {ex.Message}");
+                        progreso, "Despliegue", error);
                 }
                 var patronesExclusion = _exclusionRules.ObtenerPatrones();
 
+                var archivosCopiados = 0;
+                var archivosOmitidos = 0;
+                Action<string, bool> onArchivo = (nombre, omitido) =>
+                {
+                    if (omitido)
+                        archivosOmitidos++;
+                    else
+                        archivosCopiados++;
+
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Debug,
+                        omitido ? $"[{sistema.Nombre}] Omitiendo {nombre} (archivo protegido)." : $"[{sistema.Nombre}] Copiando {nombre}");
+                };
+
                 cronometroDespliegue.Start();
-                var copia = _deployer.Copiar(rutaPrecompilada, ambienteSistema.RutaDestino, patronesExclusion);
+                var copia = _deployer.Copiar(rutaPrecompilada, ambienteSistema.RutaDestino, patronesExclusion, onArchivo);
                 cronometroDespliegue.Stop();
 
                 if (copia.IsFailure)
+                {
+                    var error = $"[{sistema.Nombre}] Copia: {copia.Error}";
+                    Reportar(progreso, Entidades.NivelMensajeSalida.Error, error);
                     return RegistrarFalloYDevolver(solicitud, cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed,
-                        $"[{sistema.Nombre}] Copia: {copia.Error}");
+                        progreso, "Despliegue", error);
+                }
+
+                Reportar(progreso, Entidades.NivelMensajeSalida.Success,
+                    $"[{sistema.Nombre}] Copia finalizada correctamente. {archivosCopiados} archivo(s) copiado(s), {archivosOmitidos} omitido(s).");
             }
 
-            progreso?.Report("Despliegue completado.");
+            ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Finalizacion, "FINALIZACIÓN");
+            Reportar(progreso, Entidades.NivelMensajeSalida.Success,
+                $"Despliegue finalizado correctamente. GOC: {solicitud.Goc.Numero} · Ambiente: {solicitud.Ambiente.Nombre} · " +
+                $"Sistemas: {string.Join(", ", solicitud.Sistemas.Select(s => s.Codigo))} · Duración: {cronometroTotal.Elapsed:hh\\:mm\\:ss}.");
 
             var despliegueExitoso = Entidades.Despliegue.RegistrarExitoso(
                 solicitud.UsuarioAplicacion, solicitud.UsuarioWindows, solicitud.Equipo,
@@ -137,8 +195,13 @@ namespace GocDeployManager.Application.Deploy
         }
 
         private Result RegistrarFalloYDevolver(
-            SolicitudDespliegue solicitud, TimeSpan tiempoCompilacion, TimeSpan tiempoDespliegue, string error)
+            SolicitudDespliegue solicitud, TimeSpan tiempoCompilacion, TimeSpan tiempoDespliegue,
+            IProgress<Entidades.MensajeSalidaDespliegue> progreso, string etapaTexto, string error)
         {
+            ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Finalizacion, "FINALIZACIÓN");
+            Reportar(progreso, Entidades.NivelMensajeSalida.Error,
+                $"Despliegue finalizado con errores. GOC: {solicitud.Goc.Numero} · Etapa: {etapaTexto} · Error: {PrimeraLinea(error)}");
+
             var despliegueFallido = Entidades.Despliegue.RegistrarFallido(
                 solicitud.UsuarioAplicacion, solicitud.UsuarioWindows, solicitud.Equipo,
                 solicitud.Goc.Numero, solicitud.Goc.RamaBitbucket, solicitud.Ambiente.Nombre,
@@ -148,5 +211,33 @@ namespace GocDeployManager.Application.Deploy
             _logger.Error($"Despliegue fallido: GOC={solicitud.Goc.Numero}. Motivo: {error}");
             return Result.Fail(error);
         }
+
+        private static void Reportar(IProgress<Entidades.MensajeSalidaDespliegue> progreso, Entidades.NivelMensajeSalida nivel, string texto) =>
+            progreso?.Report(Entidades.MensajeSalidaDespliegue.Crear(nivel, texto));
+
+        private static void ReportarInicioEtapa(IProgress<Entidades.MensajeSalidaDespliegue> progreso, Entidades.EtapaProgreso etapa, string texto) =>
+            progreso?.Report(Entidades.MensajeSalidaDespliegue.InicioDeEtapa(etapa, texto));
+
+        /// <summary>
+        /// Streaming en vivo de una línea de stdout/stderr de git.exe o
+        /// MSBuild.exe: se clasifica como Error si tiene pinta de serlo
+        /// ("fatal:", "error CSxxxx", etc.), si no como Debug (solo visible en
+        /// modo detallado) — evita duplicar el resumen final con todo el log
+        /// crudo del proceso.
+        /// </summary>
+        private static void ReportarSalidaDeProceso(IProgress<Entidades.MensajeSalidaDespliegue> progreso, string linea)
+        {
+            if (progreso == null || string.IsNullOrEmpty(linea))
+                return;
+
+            var nivel = ParecelineaDeError(linea) ? Entidades.NivelMensajeSalida.Error : Entidades.NivelMensajeSalida.Debug;
+            progreso.Report(Entidades.MensajeSalidaDespliegue.Crear(nivel, linea));
+        }
+
+        private static bool ParecelineaDeError(string linea) =>
+            linea.IndexOf("fatal:", StringComparison.OrdinalIgnoreCase) >= 0 || PatronLineaDeError.IsMatch(linea);
+
+        private static string PrimeraLinea(string texto) =>
+            string.IsNullOrEmpty(texto) ? texto : texto.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.None)[0];
     }
 }

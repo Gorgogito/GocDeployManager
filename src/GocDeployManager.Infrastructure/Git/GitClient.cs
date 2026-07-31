@@ -25,7 +25,7 @@ namespace GocDeployManager.Infrastructure.Git
             _rutaTemporales = Guard.ContraNuloOVacio(rutaTemporales, nameof(rutaTemporales));
         }
 
-        public Result ClonarORama(string repositorioUrl, string rama, string rutaDestino, string usuarioBitbucket, string contrasenaBitbucket)
+        public Result ClonarORama(string repositorioUrl, string rama, string rutaDestino, string usuarioBitbucket, string contrasenaBitbucket, Action<string> onLineaSalida = null)
         {
             Guard.ContraNuloOVacio(repositorioUrl, nameof(repositorioUrl));
             Guard.ContraNuloOVacio(rama, nameof(rama));
@@ -44,9 +44,9 @@ namespace GocDeployManager.Infrastructure.Git
                 };
 
                 if (Directory.Exists(Path.Combine(rutaDestino, ".git")))
-                    return ActualizarRama(rama, rutaDestino, variablesEntorno);
+                    return ActualizarRama(rama, rutaDestino, variablesEntorno, onLineaSalida);
 
-                return ClonarDesdeCero(repositorioUrl, rama, rutaDestino, variablesEntorno);
+                return ClonarDesdeCero(repositorioUrl, rama, rutaDestino, variablesEntorno, onLineaSalida);
             }
             catch (Exception ex)
             {
@@ -54,37 +54,37 @@ namespace GocDeployManager.Infrastructure.Git
             }
         }
 
-        private Result ClonarDesdeCero(string repositorioUrl, string rama, string rutaDestino, System.Collections.Generic.IDictionary<string, string> variablesEntorno)
+        private Result ClonarDesdeCero(string repositorioUrl, string rama, string rutaDestino, System.Collections.Generic.IDictionary<string, string> variablesEntorno, Action<string> onLineaSalida)
         {
             var carpetaPadre = Path.GetDirectoryName(rutaDestino.TrimEnd(Path.DirectorySeparatorChar));
             if (!string.IsNullOrEmpty(carpetaPadre))
                 Directory.CreateDirectory(carpetaPadre);
 
             var argumentos = $"clone --branch \"{rama}\" --single-branch \"{repositorioUrl}\" \"{rutaDestino}\"";
-            var ejecucion = EjecutarGit(argumentos, workingDirectory: null, variablesEntorno);
+            var ejecucion = EjecutarGit(argumentos, workingDirectory: null, variablesEntorno, onLineaSalida);
 
             return ejecucion.ExitCode == 0
                 ? Result.Ok()
                 : Result.Fail($"git clone terminó con código {ejecucion.ExitCode}:{Environment.NewLine}{ejecucion.Salida}");
         }
 
-        private Result ActualizarRama(string rama, string rutaDestino, System.Collections.Generic.IDictionary<string, string> variablesEntorno)
+        private Result ActualizarRama(string rama, string rutaDestino, System.Collections.Generic.IDictionary<string, string> variablesEntorno, Action<string> onLineaSalida)
         {
-            var fetch = EjecutarGit($"fetch origin \"{rama}\"", rutaDestino, variablesEntorno);
+            var fetch = EjecutarGit($"fetch origin \"{rama}\"", rutaDestino, variablesEntorno, onLineaSalida);
             if (fetch.ExitCode != 0)
                 return Result.Fail($"git fetch terminó con código {fetch.ExitCode}:{Environment.NewLine}{fetch.Salida}");
 
-            var checkout = EjecutarGit($"checkout \"{rama}\"", rutaDestino, variablesEntorno);
+            var checkout = EjecutarGit($"checkout \"{rama}\"", rutaDestino, variablesEntorno, onLineaSalida);
             if (checkout.ExitCode != 0)
                 return Result.Fail($"git checkout terminó con código {checkout.ExitCode}:{Environment.NewLine}{checkout.Salida}");
 
-            var reset = EjecutarGit($"reset --hard \"origin/{rama}\"", rutaDestino, variablesEntorno);
+            var reset = EjecutarGit($"reset --hard \"origin/{rama}\"", rutaDestino, variablesEntorno, onLineaSalida);
             return reset.ExitCode == 0
                 ? Result.Ok()
                 : Result.Fail($"git reset --hard terminó con código {reset.ExitCode}:{Environment.NewLine}{reset.Salida}");
         }
 
-        private (int ExitCode, string Salida) EjecutarGit(string argumentos, string workingDirectory, System.Collections.Generic.IDictionary<string, string> variablesEntorno)
+        private (int ExitCode, string Salida) EjecutarGit(string argumentos, string workingDirectory, System.Collections.Generic.IDictionary<string, string> variablesEntorno, Action<string> onLineaSalida)
         {
             var infoProceso = new ProcessStartInfo
             {
@@ -103,8 +103,16 @@ namespace GocDeployManager.Infrastructure.Git
             using (var proceso = new Process { StartInfo = infoProceso })
             {
                 var salida = new StringBuilder();
-                proceso.OutputDataReceived += (s, e) => { if (e.Data != null) salida.AppendLine(e.Data); };
-                proceso.ErrorDataReceived += (s, e) => { if (e.Data != null) salida.AppendLine(e.Data); };
+                DataReceivedEventHandler alRecibirLinea = (s, e) =>
+                {
+                    if (e.Data == null)
+                        return;
+
+                    salida.AppendLine(e.Data);
+                    onLineaSalida?.Invoke(e.Data);
+                };
+                proceso.OutputDataReceived += alRecibirLinea;
+                proceso.ErrorDataReceived += alRecibirLinea;
 
                 proceso.Start();
                 proceso.BeginOutputReadLine();

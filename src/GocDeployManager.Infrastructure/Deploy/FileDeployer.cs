@@ -16,7 +16,7 @@ namespace GocDeployManager.Infrastructure.Deploy
     /// </summary>
     public sealed class FileDeployer : IFileDeployer
     {
-        public Result Copiar(string rutaOrigen, string rutaDestino, IReadOnlyList<string> patronesExclusion)
+        public Result Copiar(string rutaOrigen, string rutaDestino, IReadOnlyList<string> patronesExclusion, Action<string, bool> onArchivo = null)
         {
             Guard.ContraNuloOVacio(rutaOrigen, nameof(rutaOrigen));
             Guard.ContraNuloOVacio(rutaDestino, nameof(rutaDestino));
@@ -28,7 +28,7 @@ namespace GocDeployManager.Infrastructure.Deploy
             try
             {
                 Directory.CreateDirectory(rutaDestino);
-                SincronizarDirectorio(new DirectoryInfo(rutaOrigen), new DirectoryInfo(rutaDestino), patronesExclusion);
+                SincronizarDirectorio(new DirectoryInfo(rutaOrigen), new DirectoryInfo(rutaDestino), patronesExclusion, onArchivo);
                 return Result.Ok();
             }
             catch (Exception ex)
@@ -37,7 +37,7 @@ namespace GocDeployManager.Infrastructure.Deploy
             }
         }
 
-        private static void SincronizarDirectorio(DirectoryInfo origen, DirectoryInfo destino, IReadOnlyList<string> patronesExclusion)
+        private static void SincronizarDirectorio(DirectoryInfo origen, DirectoryInfo destino, IReadOnlyList<string> patronesExclusion, Action<string, bool> onArchivo)
         {
             var archivosOrigen = origen.GetFiles();
             var nombresArchivosOrigen = new HashSet<string>(archivosOrigen.Select(a => a.Name), StringComparer.OrdinalIgnoreCase);
@@ -47,9 +47,13 @@ namespace GocDeployManager.Infrastructure.Deploy
                 var rutaDestinoArchivo = Path.Combine(destino.FullName, archivo.Name);
 
                 if (EstaExcluido(archivo.Name, patronesExclusion) && File.Exists(rutaDestinoArchivo))
-                    continue; // ya existe y está protegido: nunca se pisa
+                {
+                    onArchivo?.Invoke(archivo.Name, true); // ya existe y está protegido: nunca se pisa
+                    continue;
+                }
 
                 archivo.CopyTo(rutaDestinoArchivo, overwrite: true);
+                onArchivo?.Invoke(archivo.Name, false);
             }
 
             if (destino.Exists)
@@ -71,7 +75,7 @@ namespace GocDeployManager.Infrastructure.Deploy
             foreach (var subcarpeta in carpetasOrigen)
             {
                 var destinoSubcarpeta = destino.CreateSubdirectory(subcarpeta.Name);
-                SincronizarDirectorio(subcarpeta, destinoSubcarpeta, patronesExclusion);
+                SincronizarDirectorio(subcarpeta, destinoSubcarpeta, patronesExclusion, onArchivo);
             }
 
             if (destino.Exists)

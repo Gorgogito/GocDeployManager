@@ -1,3 +1,4 @@
+using System;
 using GocDeployManager.Common;
 using GocDeployManager.Domain.Entities;
 
@@ -10,6 +11,10 @@ namespace GocDeployManager.Domain.Abstractions
     /// </summary>
     public interface IMsBuildRunner
     {
-        Result<string> EjecutarPaso(PasoDeBuild paso, string rutaBase);
+        /// <param name="onLineaSalida">
+        /// Invocado por cada línea de stdout/stderr de MSBuild.exe a medida
+        /// que se produce (panel de salida en tiempo real). Opcional.
+        /// </param>
+        Result<string> EjecutarPaso(PasoDeBuild paso, string rutaBase, Action<string> onLineaSalida = null);
     }
 }

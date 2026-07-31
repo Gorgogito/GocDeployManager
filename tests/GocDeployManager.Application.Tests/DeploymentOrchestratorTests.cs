@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GocDeployManager.Application.Deploy;
 using GocDeployManager.Common;
@@ -62,11 +63,11 @@ namespace GocDeployManager.Application.Tests
         public void EjecutarDespliegue_CaminoFeliz_RegistraExitoEnHistorial()
         {
             _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
-            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Ok());
-            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>()))
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Ok("compilación correcta"));
-            _deployer.Setup(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>()))
+            _deployer.Setup(d => d.Copiar(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<Action<string, bool>>()))
                 .Returns(Result.Ok());
 
             var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud());
@@ -79,7 +80,7 @@ namespace GocDeployManager.Application.Tests
         public void EjecutarDespliegue_SiFallaElClonado_RegistraFalloYNoCompila()
         {
             _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
-            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Fail("rama no encontrada"));
 
             var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud());
@@ -94,9 +95,9 @@ namespace GocDeployManager.Application.Tests
         public void EjecutarDespliegue_SiFallaUnPasoDeBuild_NoCopiaYRegistraFallo()
         {
             _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(_configuracionSit));
-            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Ok());
-            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>()))
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Fail<string>("error de compilación en Sit.BusinessEntities"));
 
             var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud());
@@ -141,9 +142,9 @@ namespace GocDeployManager.Application.Tests
                 new SecuenciaDeBuild(_sit, new[] { new PasoDeBuild(1, "Sit.BusinessEntities") }));
 
             _sistemas.Setup(s => s.ObtenerConfiguracion(_sit)).Returns(Result.Ok(configuracionConComillas));
-            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            _git.Setup(g => g.ClonarORama(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Ok());
-            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>()))
+            _msbuild.Setup(m => m.EjecutarPaso(It.IsAny<PasoDeBuild>(), It.IsAny<string>(), It.IsAny<Action<string>>()))
                 .Returns(Result.Ok("compilación correcta"));
 
             var resultado = _orquestador.EjecutarDespliegue(CrearSolicitud());

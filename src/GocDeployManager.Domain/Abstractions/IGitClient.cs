@@ -1,3 +1,4 @@
+using System;
 using GocDeployManager.Common;
 
 namespace GocDeployManager.Domain.Abstractions
@@ -8,11 +9,17 @@ namespace GocDeployManager.Domain.Abstractions
     /// </summary>
     public interface IGitClient
     {
+        /// <param name="onLineaSalida">
+        /// Invocado por cada línea de stdout/stderr de git.exe a medida que se
+        /// produce (panel de salida en tiempo real). Opcional — no cambia qué
+        /// devuelve el método, solo permite observar el progreso en vivo.
+        /// </param>
         Result ClonarORama(
             string repositorioUrl,
             string rama,
             string rutaDestino,
             string usuarioBitbucket,
-            string contrasenaBitbucket);
+            string contrasenaBitbucket,
+            Action<string> onLineaSalida = null);
     }
 }
