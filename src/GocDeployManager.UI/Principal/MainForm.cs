@@ -195,7 +195,7 @@ namespace GocDeployManager.UI.Principal
             _lblEtapaActual = new Label
             {
                 Location = new Point(_grupoProgreso.Padding.Left, _grupoProgreso.Padding.Top),
-                Width = LogicalToDeviceUnits(600),
+                Width = LogicalToDeviceUnits(1000),
                 Height = LogicalToDeviceUnits(20),
                 ForeColor = tema.TextoPrimario,
                 Text = "Sin despliegues en curso.",
