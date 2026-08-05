@@ -58,6 +58,11 @@ namespace DesktopComponents.Controls
 
         private const string MarcaSeparadorDeEtapa = "__separador_etapa__";
 
+        // Ancho máximo de texto visto en la columna "Mensaje" desde el último
+        // Items.Clear() — permite expandir la columna y mostrar el scroll
+        // horizontal cuando algún mensaje supera el ancho de la ventana.
+        private int _anchoMinimoMensaje = 0;
+
         /// <summary>
         /// Agrega una fila (una o más columnas) con un color de texto propio —
         /// ej. rojo para errores, ámbar para advertencias, en el log de despliegue.
@@ -70,6 +75,11 @@ namespace DesktopComponents.Controls
             var estabaAlFinal = EstaAlFinal();
             var item = new ListViewItem(columnas) { ForeColor = color };
             Items.Add(item);
+
+            var textoMensaje = columnas.Length > 1 ? columnas[1] : (columnas.Length > 0 ? columnas[0] : string.Empty);
+            if (!string.IsNullOrEmpty(textoMensaje))
+                ExpansionarColumnaParaMensaje(textoMensaje, Font);
+
             if (estabaAlFinal)
                 item.EnsureVisible();
             return item;
@@ -84,9 +94,47 @@ namespace DesktopComponents.Controls
             var estabaAlFinal = EstaAlFinal();
             var item = new ListViewItem(new[] { string.Empty, texto }) { Tag = MarcaSeparadorDeEtapa, ForeColor = color };
             Items.Add(item);
+
+            if (!string.IsNullOrEmpty(texto))
+                ExpansionarColumnaParaSeparador(texto);
+
             if (estabaAlFinal)
                 item.EnsureVisible();
             return item;
+        }
+
+        private void ExpansionarColumnaParaMensaje(string texto, Font fuente)
+        {
+            var ancho = TextRenderer.MeasureText(
+                texto, fuente, new Size(int.MaxValue, int.MaxValue),
+                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + LogicalToDeviceUnits(12);
+
+            if (ancho > _anchoMinimoMensaje)
+            {
+                _anchoMinimoMensaje = ancho;
+                ActualizarAnchoUltimaColumna();
+            }
+        }
+
+        // El separador dibuja su texto a lo ancho de toda la fila (col0 + col1),
+        // así que el mínimo para col1 es el ancho total del texto menos col0.
+        private void ExpansionarColumnaParaSeparador(string texto)
+        {
+            using (var fuenteNegrita = new Font(Font, FontStyle.Bold))
+            {
+                var anchoTotal = TextRenderer.MeasureText(
+                    texto, fuenteNegrita, new Size(int.MaxValue, int.MaxValue),
+                    TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width + LogicalToDeviceUnits(12);
+
+                var anchoCol0 = Columns.Count > 0 ? Columns[0].Width : 0;
+                var anchoNecesario = anchoTotal - anchoCol0;
+
+                if (anchoNecesario > _anchoMinimoMensaje)
+                {
+                    _anchoMinimoMensaje = anchoNecesario;
+                    ActualizarAnchoUltimaColumna();
+                }
+            }
         }
 
         /// <summary>
@@ -104,28 +152,37 @@ namespace DesktopComponents.Controls
         }
 
         /// <summary>
-        /// Ensancha la última columna para llenar el ancho disponible — sin
-        /// esto, la franja del encabezado más allá de la última columna queda
-        /// sin pintar (se ve como un hueco del color nativo de Windows).
-        /// Llamar después de configurar las columnas y en cada resize.
+        /// Ajusta la última columna al ancho disponible o al contenido, el que
+        /// sea mayor — si el contenido supera la ventana aparece el scroll
+        /// horizontal nativo. Llamar después de configurar las columnas.
         /// </summary>
-        public void EstirarUltimaColumna()
+        public void EstirarUltimaColumna() => ActualizarAnchoUltimaColumna();
+
+        private void ActualizarAnchoUltimaColumna()
         {
-            if (Columns.Count == 0)
+            if (Columns.Count == 0 || !IsHandleCreated)
                 return;
 
-            var anchoRestante = ClientSize.Width;
+            var anchoFijo = 0;
             for (var i = 0; i < Columns.Count - 1; i++)
-                anchoRestante -= Columns[i].Width;
+                anchoFijo += Columns[i].Width;
 
-            var minimo = LogicalToDeviceUnits(60);
-            Columns[Columns.Count - 1].Width = Math.Max(minimo, anchoRestante);
+            var anchoDisponible = Math.Max(LogicalToDeviceUnits(60), ClientSize.Width - anchoFijo);
+            Columns[Columns.Count - 1].Width = Math.Max(anchoDisponible, _anchoMinimoMensaje);
         }
 
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
-            EstirarUltimaColumna();
+            ActualizarAnchoUltimaColumna();
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int LvmDeleteAllItems = 0x1009;
+            if (m.Msg == LvmDeleteAllItems)
+                _anchoMinimoMensaje = 0;
+            base.WndProc(ref m);
         }
 
         protected override void OnDrawColumnHeader(DrawListViewColumnHeaderEventArgs e)
