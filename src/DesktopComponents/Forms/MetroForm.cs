@@ -89,7 +89,7 @@ namespace DesktopComponents.Forms
             var tema = ThemeManager.Actual;
             var altoBarra = LogicalToDeviceUnits(AltoBarraTituloLogico);
 
-            using (var pincelBarra = new SolidBrush(tema.Superficie))
+            using (var pincelBarra = new SolidBrush(tema.SuperficieElevada))
                 e.Graphics.FillRectangle(pincelBarra, new Rectangle(0, 0, Width, altoBarra));
 
             TextRenderer.DrawText(
@@ -116,7 +116,7 @@ namespace DesktopComponents.Forms
             if (Redimensionable)
                 DibujarBotonVentana(e.Graphics, _rectBotonMaximizar, WindowState == FormWindowState.Maximized ? "❐" : "□", _maximizarHover, tema.Acento, tema);
 
-            using (var lapizBorde = new Pen(tema.Borde))
+            using (var lapizBorde = new Pen(Theme.Mezclar(tema.Borde, tema.Superficie, 0.5f)))
                 e.Graphics.DrawRectangle(lapizBorde, new Rectangle(0, 0, Width - 1, Height - 1));
         }
 

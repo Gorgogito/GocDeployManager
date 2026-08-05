@@ -31,7 +31,7 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            _radio = LogicalToDeviceUnits(8);
+            _radio = LogicalToDeviceUnits(12);
             _altoTitulo = LogicalToDeviceUnits(30);
             Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             Padding = new Padding(
@@ -61,9 +61,13 @@ namespace DesktopComponents.Controls
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+
+            // Sombra MD3 elevation 1
+            Elevation.DibujarSombra(e.Graphics, rect, _radio, tema.Sombra, 2);
+
             using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
             using (var pincelFondo = new SolidBrush(tema.Superficie))
-            using (var lapizBorde = new Pen(tema.Borde))
+            using (var lapizBorde = new Pen(Theme.Mezclar(tema.Borde, tema.Superficie, 0.4f)))
             {
                 e.Graphics.FillPath(pincelFondo, ruta);
                 e.Graphics.DrawPath(lapizBorde, ruta);

@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using DesktopComponents.Theming;
@@ -86,11 +87,11 @@ namespace DesktopComponents.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-
             var tema = ThemeManager.Actual;
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            using (var ruta = Dibujo.RutaRedondeada(rect, LogicalToDeviceUnits(4)))
             using (var lapizBorde = new Pen(tema.Borde))
-                e.Graphics.DrawRectangle(lapizBorde, rect);
+                e.Graphics.DrawPath(lapizBorde, ruta);
         }
     }
 }

@@ -51,9 +51,9 @@ namespace DesktopComponents.Controls
             BackgroundColor = tema.Superficie;
             GridColor = tema.Borde;
 
-            ColumnHeadersDefaultCellStyle.BackColor = tema.Fondo;
+            ColumnHeadersDefaultCellStyle.BackColor = tema.SuperficieElevada;
             ColumnHeadersDefaultCellStyle.ForeColor = tema.TextoSecundario;
-            ColumnHeadersDefaultCellStyle.SelectionBackColor = tema.Fondo;
+            ColumnHeadersDefaultCellStyle.SelectionBackColor = tema.SuperficieElevada;
             ColumnHeadersDefaultCellStyle.SelectionForeColor = tema.TextoSecundario;
             ColumnHeadersDefaultCellStyle.Font = new Font(Font, FontStyle.Bold);
             ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;

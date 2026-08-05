@@ -61,7 +61,7 @@ namespace DesktopComponents.Controls
 
         public void AplicarTema(Theme tema)
         {
-            BackColor = tema.Superficie;
+            BackColor = tema.SuperficieElevada;
             Invalidate();
         }
 
@@ -69,7 +69,7 @@ namespace DesktopComponents.Controls
         {
             var tema = ThemeManager.Actual;
 
-            using (var pincelFondo = new SolidBrush(tema.Superficie))
+            using (var pincelFondo = new SolidBrush(tema.SuperficieElevada))
                 e.Graphics.FillRectangle(pincelFondo, ClientRectangle);
 
             using (var lapizBorde = new Pen(tema.Borde))

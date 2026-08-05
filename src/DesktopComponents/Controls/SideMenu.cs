@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using DesktopComponents.Theming;
 
@@ -99,18 +100,22 @@ namespace DesktopComponents.Controls
                 var seleccionado = i == _indiceSeleccionado;
                 var hover = i == _indiceHover;
 
+                var padH = LogicalToDeviceUnits(12);
+                var altoIndicador = LogicalToDeviceUnits(36);
+                var padV = (rectItem.Height - altoIndicador) / 2;
+                var rectPill = new Rectangle(rectItem.X + padH, rectItem.Y + padV, rectItem.Width - padH * 2, altoIndicador);
+
                 if (seleccionado)
                 {
-                    using (var pincelFondoSel = new SolidBrush(Theme.Mezclar(tema.Acento, tema.Superficie, 0.85f)))
-                        g.FillRectangle(pincelFondoSel, rectItem);
-
-                    using (var pincelBarra = new SolidBrush(tema.Acento))
-                        g.FillRectangle(pincelBarra, new Rectangle(0, rectItem.Y, LogicalToDeviceUnits(3), _altoItem));
+                    using (var ruta = Dibujo.RutaRedondeada(rectPill, LogicalToDeviceUnits(18)))
+                    using (var pincel = new SolidBrush(Theme.Mezclar(tema.Acento, tema.Superficie, 0.84f)))
+                        g.FillPath(pincel, ruta);
                 }
                 else if (hover)
                 {
-                    using (var pincelHover = new SolidBrush(Theme.Mezclar(tema.Superficie, tema.TextoPrimario, 0.05f)))
-                        g.FillRectangle(pincelHover, rectItem);
+                    using (var ruta = Dibujo.RutaRedondeada(rectPill, LogicalToDeviceUnits(18)))
+                    using (var pincel = new SolidBrush(Theme.Mezclar(tema.Superficie, tema.TextoPrimario, 0.06f)))
+                        g.FillPath(pincel, ruta);
                 }
 
                 var colorTexto = seleccionado ? tema.Acento : tema.TextoPrimario;

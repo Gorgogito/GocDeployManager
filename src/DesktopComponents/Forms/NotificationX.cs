@@ -123,34 +123,40 @@ namespace DesktopComponents.Forms
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
+            var radio = LogicalToDeviceUnits(16);
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (var ruta = Dibujo.RutaRedondeada(rect, LogicalToDeviceUnits(8)))
-            using (var pincelFondo = new SolidBrush(tema.Superficie))
-            using (var lapizBorde = new Pen(tema.Borde))
-            {
-                g.FillPath(pincelFondo, ruta);
-                g.DrawPath(lapizBorde, ruta);
-            }
 
-            var barraAcento = new Rectangle(0, 0, LogicalToDeviceUnits(4), Height);
-            using (var rutaBarra = Dibujo.RutaRedondeada(barraAcento, LogicalToDeviceUnits(2)))
-            using (var pincelAcento = new SolidBrush(ColorSegunTipo(tema)))
-                g.FillPath(pincelAcento, rutaBarra);
+            using (var ruta = Dibujo.RutaRedondeada(rect, radio))
+            {
+                using (var pincelFondo = new SolidBrush(tema.SuperficieElevada))
+                    g.FillPath(pincelFondo, ruta);
+
+                // Barra de acento superior (4dp, clipeada a la forma redondeada)
+                var estadoClip = g.Save();
+                g.SetClip(ruta);
+                using (var pincelAcento = new SolidBrush(ColorSegunTipo(tema)))
+                    g.FillRectangle(pincelAcento, new Rectangle(0, 0, Width, LogicalToDeviceUnits(4)));
+                g.Restore(estadoClip);
+
+                using (var lapizBorde = new Pen(Theme.Mezclar(tema.Borde, tema.SuperficieElevada, 0.4f)))
+                    g.DrawPath(lapizBorde, ruta);
+            }
 
             var margen = LogicalToDeviceUnits(16);
             using (var fuenteTitulo = new Font(Font, FontStyle.Bold))
             {
                 TextRenderer.DrawText(
                     g, _titulo, fuenteTitulo,
-                    new Rectangle(margen, LogicalToDeviceUnits(12), Width - margen * 2, LogicalToDeviceUnits(20)),
+                    new Rectangle(margen, LogicalToDeviceUnits(14), Width - margen * 2, LogicalToDeviceUnits(20)),
                     tema.TextoPrimario,
                     TextFormatFlags.Left | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
             }
 
             TextRenderer.DrawText(
                 g, _mensaje, Font,
-                new Rectangle(margen, LogicalToDeviceUnits(36), Width - margen * 2, LogicalToDeviceUnits(40)),
-                tema.TextoSecundario, TextFormatFlags.Left | TextFormatFlags.WordBreak);
+                new Rectangle(margen, LogicalToDeviceUnits(38), Width - margen * 2, LogicalToDeviceUnits(38)),
+                tema.TextoSecundario,
+                TextFormatFlags.Left | TextFormatFlags.WordBreak);
         }
 
         private Color ColorSegunTipo(Theme tema)

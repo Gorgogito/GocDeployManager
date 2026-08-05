@@ -51,8 +51,8 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            Height = LogicalToDeviceUnits(10);
-            _radio = LogicalToDeviceUnits(5);
+            Height = LogicalToDeviceUnits(6);
+            _radio = LogicalToDeviceUnits(3);
 
             _suscripcionTema = new SuscripcionTema(AplicarTema);
         }
@@ -77,7 +77,7 @@ namespace DesktopComponents.Controls
 
             using (var rutaPista = Dibujo.RutaRedondeada(pista, _radio))
             {
-                using (var pincelPista = new SolidBrush(tema.Borde))
+                using (var pincelPista = new SolidBrush(Theme.Mezclar(tema.Acento, tema.Superficie, 0.85f)))
                     g.FillPath(pincelPista, rutaPista);
 
                 var rango = Math.Max(1, _maximo - Minimo);

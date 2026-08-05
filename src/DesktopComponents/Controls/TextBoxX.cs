@@ -97,7 +97,7 @@ namespace DesktopComponents.Controls
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
             using (var pincelFondo = new SolidBrush(tema.Superficie))
-            using (var lapizBorde = new Pen(_tieneFoco ? tema.Acento : tema.Borde, _tieneFoco ? 1.6f : 1f))
+            using (var lapizBorde = new Pen(_tieneFoco ? tema.Acento : tema.Borde, _tieneFoco ? 2f : 1f))
             {
                 e.Graphics.FillPath(pincelFondo, ruta);
                 e.Graphics.DrawPath(lapizBorde, ruta);
