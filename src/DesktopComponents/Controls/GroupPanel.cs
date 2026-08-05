@@ -47,6 +47,15 @@ namespace DesktopComponents.Controls
             Invalidate();
         }
 
+        protected override void OnPaintBackground(PaintEventArgs pevent)
+        {
+            // Muestra el color del padre en las esquinas exteriores al borde
+            // redondeado, evitando que aparezca el BackColor del control.
+            var bgColor = Parent?.BackColor ?? ThemeManager.Actual.Fondo;
+            using (var pincel = new SolidBrush(bgColor))
+                pevent.Graphics.FillRectangle(pincel, ClientRectangle);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -61,9 +70,6 @@ namespace DesktopComponents.Controls
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-
-            // Sombra MD3 elevation 1
-            Elevation.DibujarSombra(e.Graphics, rect, _radio, tema.Sombra, 2);
 
             using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
             using (var pincelFondo = new SolidBrush(tema.Superficie))

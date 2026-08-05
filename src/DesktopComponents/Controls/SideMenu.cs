@@ -87,6 +87,7 @@ namespace DesktopComponents.Controls
         {
             var tema = ThemeManager.Actual;
             var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
 
             using (var pincelFondo = new SolidBrush(tema.Superficie))
                 g.FillRectangle(pincelFondo, ClientRectangle);

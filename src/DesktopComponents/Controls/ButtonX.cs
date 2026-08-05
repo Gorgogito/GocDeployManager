@@ -53,6 +53,16 @@ namespace DesktopComponents.Controls
 
         public void AplicarTema(Theme tema) => Invalidate();
 
+        protected override void OnPaintBackground(PaintEventArgs pevent)
+        {
+            // Pinta las esquinas rectangulares del control con el color del padre
+            // para que la forma redondeada de OnPaint no deje artefactos de color
+            // de sistema en las cuatro esquinas.
+            var bgColor = Parent?.BackColor ?? ThemeManager.Actual.SuperficieElevada;
+            using (var pincel = new SolidBrush(bgColor))
+                pevent.Graphics.FillRectangle(pincel, ClientRectangle);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

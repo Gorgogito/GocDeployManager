@@ -78,7 +78,11 @@ namespace DesktopComponents.Forms
             return notificacion;
         }
 
-        public void AplicarTema(Theme tema) => Invalidate();
+        public void AplicarTema(Theme tema)
+        {
+            BackColor = tema.SuperficieElevada;
+            Invalidate();
+        }
 
         private void TimerAnimacion_Tick(object sender, EventArgs e)
         {
