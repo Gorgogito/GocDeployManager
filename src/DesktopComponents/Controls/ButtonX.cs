@@ -32,11 +32,8 @@ namespace DesktopComponents.Controls
                 true);
 
             FlatStyle = FlatStyle.Flat;
-            FlatAppearance.BorderSize         = 0;
-            FlatAppearance.BorderColor        = Color.Transparent;
-            FlatAppearance.MouseDownBackColor = Color.Transparent;
-            FlatAppearance.MouseOverBackColor = Color.Transparent;
-            UseVisualStyleBackColor = false;
+            FlatAppearance.BorderSize = 0;
+            UseVisualStyleBackColor   = false;
             Font   = new Font("Segoe UI", 9.5f);
             Cursor = Cursors.Hand;
             _radio = LogicalToDeviceUnits(20);
