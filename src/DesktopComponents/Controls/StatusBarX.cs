@@ -5,11 +5,6 @@ using DesktopComponents.Theming;
 
 namespace DesktopComponents.Controls
 {
-    /// <summary>
-    /// Barra de estado propia (no envuelve StatusStrip nativo): texto a la
-    /// izquierda (etapa actual) y a la derecha (tiempo transcurrido), como
-    /// pide la pantalla principal.
-    /// </summary>
     [DesignerCategory("")]
     public sealed class StatusBarX : Control, IThemedControl
     {
@@ -36,9 +31,9 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            Dock = DockStyle.Bottom;
+            Dock   = DockStyle.Bottom;
             Height = LogicalToDeviceUnits(28);
-            Font = new Font("Segoe UI", 8.5f);
+            Font   = new Font("Segoe UI", 8.5f);
 
             _suscripcionTema = new SuscripcionTema(AplicarTema);
         }
@@ -49,28 +44,32 @@ namespace DesktopComponents.Controls
         {
             if (disposing)
                 _suscripcionTema.Dispose();
-
             base.Dispose(disposing);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var tema = ThemeManager.Actual;
+            var tema   = ThemeManager.Actual;
+            var g      = e.Graphics;
+            var margen = LogicalToDeviceUnits(12);
+            var mitad  = Width / 2;
 
             using (var pincelFondo = new SolidBrush(tema.SuperficieElevada))
-                e.Graphics.FillRectangle(pincelFondo, ClientRectangle);
+                g.FillRectangle(pincelFondo, ClientRectangle);
 
-            using (var lapizBorde = new Pen(tema.Borde))
-                e.Graphics.DrawLine(lapizBorde, 0, 0, Width, 0);
+            // Borde superior.
+            using (var lapizBorde = new Pen(tema.BordereReposo))
+                g.DrawLine(lapizBorde, 0, 0, Width, 0);
 
-            var margen = LogicalToDeviceUnits(12);
-            var mitad = Width / 2;
+            // Barra de acento de 2 dp en el extremo izquierdo.
+            using (var pincelAcento = new SolidBrush(tema.Acento))
+                g.FillRectangle(pincelAcento, new Rectangle(0, 0, LogicalToDeviceUnits(2), Height));
 
             if (!string.IsNullOrEmpty(_textoIzquierda))
             {
                 TextRenderer.DrawText(
-                    e.Graphics, _textoIzquierda, Font,
-                    new Rectangle(margen, 0, mitad - margen, Height),
+                    g, _textoIzquierda, Font,
+                    new Rectangle(margen + LogicalToDeviceUnits(4), 0, mitad - margen, Height),
                     tema.TextoSecundario,
                     TextFormatFlags.VerticalCenter | TextFormatFlags.Left |
                     TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
@@ -79,7 +78,7 @@ namespace DesktopComponents.Controls
             if (!string.IsNullOrEmpty(_textoDerecha))
             {
                 TextRenderer.DrawText(
-                    e.Graphics, _textoDerecha, Font,
+                    g, _textoDerecha, Font,
                     new Rectangle(mitad, 0, Width - mitad - margen, Height),
                     tema.TextoSecundario,
                     TextFormatFlags.VerticalCenter | TextFormatFlags.Right |

@@ -7,13 +7,6 @@ using DesktopComponents.Theming;
 
 namespace DesktopComponents.Controls
 {
-    /// <summary>
-    /// Barra de progreso completamente pintada a mano — deliberadamente NO
-    /// hereda de <see cref="ProgressBar"/> (control nativo cuyo relleno lo
-    /// dibuja el tema visual de Windows, igual que le pasaba a ComboBox con
-    /// UserPaint) sino de <see cref="Control"/>, para tener control total del
-    /// color y evitar ese mismo problema.
-    /// </summary>
     [DesignerCategory("")]
     public sealed class ProgressBarX : Control, IThemedControl
     {
@@ -36,9 +29,7 @@ namespace DesktopComponents.Controls
             set
             {
                 var nuevo = Math.Max(Minimo, Math.Min(_maximo, value));
-                if (nuevo == _valor)
-                    return;
-
+                if (nuevo == _valor) return;
                 _valor = nuevo;
                 Invalidate();
             }
@@ -51,8 +42,8 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            Height = LogicalToDeviceUnits(6);
-            _radio = LogicalToDeviceUnits(3);
+            Height = LogicalToDeviceUnits(8);
+            _radio = LogicalToDeviceUnits(4);
 
             _suscripcionTema = new SuscripcionTema(AplicarTema);
         }
@@ -63,24 +54,24 @@ namespace DesktopComponents.Controls
         {
             if (disposing)
                 _suscripcionTema.Dispose();
-
             base.Dispose(disposing);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var tema = ThemeManager.Actual;
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g    = e.Graphics;
+            GraficosX.PrepararAlta(g);
 
             var pista = new Rectangle(0, 0, Width - 1, Height - 1);
 
             using (var rutaPista = Dibujo.RutaRedondeada(pista, _radio))
             {
-                using (var pincelPista = new SolidBrush(Theme.Mezclar(tema.Acento, tema.Superficie, 0.85f)))
+                // Pista de fondo
+                using (var pincelPista = new SolidBrush(Theme.Mezclar(tema.Acento, tema.Superficie, 0.82f)))
                     g.FillPath(pincelPista, rutaPista);
 
-                var rango = Math.Max(1, _maximo - Minimo);
+                var rango      = Math.Max(1, _maximo - Minimo);
                 var proporcion = Math.Max(0f, Math.Min(1f, (float)(_valor - Minimo) / rango));
                 var anchoRelleno = (int)(Width * proporcion);
 
@@ -88,10 +79,8 @@ namespace DesktopComponents.Controls
                 {
                     var estadoClip = g.Save();
                     g.SetClip(rutaPista);
-
                     using (var pincelRelleno = new SolidBrush(tema.Acento))
                         g.FillRectangle(pincelRelleno, new Rectangle(0, 0, anchoRelleno, Height));
-
                     g.Restore(estadoClip);
                 }
             }

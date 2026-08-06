@@ -32,8 +32,12 @@ namespace DesktopComponents.Controls
                 true);
 
             FlatStyle = FlatStyle.Flat;
-            FlatAppearance.BorderSize = 0;
-            Font = new Font("Segoe UI", 9.5f);
+            FlatAppearance.BorderSize         = 0;
+            FlatAppearance.BorderColor        = Color.Transparent;
+            FlatAppearance.MouseDownBackColor = Color.Transparent;
+            FlatAppearance.MouseOverBackColor = Color.Transparent;
+            UseVisualStyleBackColor = false;
+            Font   = new Font("Segoe UI", 9.5f);
             Cursor = Cursors.Hand;
             _radio = LogicalToDeviceUnits(20);
             Height = LogicalToDeviceUnits(36);
@@ -41,8 +45,8 @@ namespace DesktopComponents.Controls
             _timerRipple = new Timer { Interval = 16 };
             _timerRipple.Tick += (s, e) =>
             {
-                _radioRipple += LogicalToDeviceUnits(10);
-                _opacidadRipple = Math.Max(0f, _opacidadRipple - 0.04f);
+                _radioRipple    += LogicalToDeviceUnits(10);
+                _opacidadRipple  = Math.Max(0f, _opacidadRipple - 0.04f);
                 if (_opacidadRipple <= 0)
                     _timerRipple.Stop();
                 Invalidate();
@@ -53,11 +57,14 @@ namespace DesktopComponents.Controls
 
         public void AplicarTema(Theme tema) => Invalidate();
 
+        // Suprime el cambio de estilo Win32 BS_DEFPUSHBUTTON que provoca
+        // el borde negro rectangular cuando el botón es Form.AcceptButton.
+        public override void NotifyDefault(bool value) { }
+
         protected override void OnPaintBackground(PaintEventArgs pevent)
         {
-            // Pinta las esquinas rectangulares del control con el color del padre
-            // para que la forma redondeada de OnPaint no deje artefactos de color
-            // de sistema en las cuatro esquinas.
+            // Pinta el color del padre en el área rectangular completa para que
+            // las esquinas fuera de la forma redondeada sean invisibles.
             var bgColor = Parent?.BackColor ?? ThemeManager.Actual.SuperficieElevada;
             using (var pincel = new SolidBrush(bgColor))
                 pevent.Graphics.FillRectangle(pincel, ClientRectangle);
@@ -73,15 +80,15 @@ namespace DesktopComponents.Controls
             base.Dispose(disposing);
         }
 
-        protected override void OnMouseEnter(EventArgs e) { _mouseEncima = true; Invalidate(); base.OnMouseEnter(e); }
-        protected override void OnMouseLeave(EventArgs e) { _mouseEncima = false; _mousePresionado = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnMouseEnter(EventArgs e) { _mouseEncima    = true;  Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _mouseEncima    = false; _mousePresionado = false; Invalidate(); base.OnMouseLeave(e); }
 
         protected override void OnMouseDown(MouseEventArgs mevent)
         {
             _mousePresionado = true;
-            _puntoRipple = mevent.Location;
-            _radioRipple = 0;
-            _opacidadRipple = 0.28f;
+            _puntoRipple     = mevent.Location;
+            _radioRipple     = 0;
+            _opacidadRipple  = 0.28f;
             _timerRipple.Stop();
             _timerRipple.Start();
             Invalidate();
@@ -93,29 +100,41 @@ namespace DesktopComponents.Controls
         protected override void OnPaint(PaintEventArgs pevent)
         {
             var tema = ThemeManager.Actual;
-            var g = pevent.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g    = pevent.Graphics;
+            GraficosX.PrepararAlta(g);
 
-            var colorBase = ColorBaseSegunVariante(tema);
+            // Variante tonal (Secundario): fondo azul muy suave + texto acento.
+            // Variantes con fondo sólido (Primario, Peligro): texto blanco.
+            var esTonal     = _variante == VarianteButtonX.Secundario;
+            var colorBase   = ColorBaseSegunVariante(tema);
+            var colorEstado = esTonal ? tema.Acento : tema.TextoEnAcento;
+
             var colorFondo = !Enabled
                 ? Theme.Mezclar(colorBase, tema.Superficie, 0.55f)
                 : _mousePresionado
-                    ? Theme.Mezclar(colorBase, tema.TextoEnAcento, 0.12f)
+                    ? Theme.Mezclar(colorBase, colorEstado, 0.12f)
                     : _mouseEncima
-                        ? Theme.Mezclar(colorBase, tema.TextoEnAcento, 0.08f)
+                        ? Theme.Mezclar(colorBase, colorEstado, 0.08f)
                         : colorBase;
 
-            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            var rect = new Rectangle(1, 1, Width - 3, Height - 3);
             using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
             {
                 using (var pincel = new SolidBrush(colorFondo))
                     g.FillPath(pincel, ruta);
 
+                // Borde sutil para variante tonal
+                if (esTonal)
+                {
+                    using (var lapizBorde = new Pen(Theme.Mezclar(tema.Acento, tema.Superficie, 0.55f)))
+                        g.DrawPath(lapizBorde, ruta);
+                }
+
                 if (_radioRipple > 0 && _opacidadRipple > 0)
                 {
-                    var estado = g.Save();
+                    var estado      = g.Save();
                     g.SetClip(ruta);
-                    var rippleColor = Color.FromArgb((int)(255 * _opacidadRipple), tema.TextoEnAcento);
+                    var rippleColor = Color.FromArgb((int)(255 * _opacidadRipple), colorEstado);
                     using (var pincelRipple = new SolidBrush(rippleColor))
                         g.FillEllipse(pincelRipple,
                             _puntoRipple.X - _radioRipple,
@@ -125,9 +144,10 @@ namespace DesktopComponents.Controls
                 }
             }
 
-            var colorTexto = Enabled
-                ? tema.TextoEnAcento
-                : Theme.Mezclar(tema.TextoEnAcento, tema.Superficie, 0.62f);
+            var colorTexto = !Enabled
+                ? Theme.Mezclar(colorEstado, tema.Superficie, 0.62f)
+                : colorEstado;
+
             TextRenderer.DrawText(g, Text, Font, ClientRectangle, colorTexto,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter |
                 TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
@@ -137,9 +157,13 @@ namespace DesktopComponents.Controls
         {
             switch (_variante)
             {
-                case VarianteButtonX.Peligro:    return tema.Peligro;
-                case VarianteButtonX.Secundario: return tema.TextoSecundario;
-                default:                         return tema.Acento;
+                case VarianteButtonX.Peligro:
+                    return tema.Peligro;
+                case VarianteButtonX.Secundario:
+                    // Tonal button: fondo azul muy tintado — el texto usará tema.Acento.
+                    return Theme.Mezclar(tema.Acento, tema.Superficie, 0.88f);
+                default:
+                    return tema.Acento;
             }
         }
     }

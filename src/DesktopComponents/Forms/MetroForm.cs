@@ -1,8 +1,10 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using DesktopComponents.Controls;
 using DesktopComponents.Theming;
 
 namespace DesktopComponents.Forms
@@ -16,19 +18,20 @@ namespace DesktopComponents.Forms
     public class MetroForm : Form, IThemedControl
     {
         private const int AltoBarraTituloLogico = 36;
-        private const int WM_NCHITTEST = 0x84;
-        private const int WM_LBUTTONDBLCLK = 0x203;
-        private const int WM_GETMINMAXINFO = 0x24;
-        private const int HTCLIENT = 1;
-        private const int HTCAPTION = 2;
-        private const int HTLEFT = 10;
-        private const int HTRIGHT = 11;
-        private const int HTTOP = 12;
-        private const int HTTOPLEFT = 13;
-        private const int HTTOPRIGHT = 14;
-        private const int HTBOTTOM = 15;
-        private const int HTBOTTOMLEFT = 16;
+        private const int WM_NCHITTEST      = 0x84;
+        private const int WM_LBUTTONDBLCLK  = 0x203;
+        private const int WM_GETMINMAXINFO  = 0x24;
+        private const int HTCLIENT    = 1;
+        private const int HTCAPTION   = 2;
+        private const int HTLEFT      = 10;
+        private const int HTRIGHT     = 11;
+        private const int HTTOP       = 12;
+        private const int HTTOPLEFT   = 13;
+        private const int HTTOPRIGHT  = 14;
+        private const int HTBOTTOM    = 15;
+        private const int HTBOTTOMLEFT  = 16;
         private const int HTBOTTOMRIGHT = 17;
+        private const int CS_DROPSHADOW = 0x20000;
 
         private readonly SuscripcionTema _suscripcionTema;
         private Rectangle _rectBotonCerrar;
@@ -37,16 +40,26 @@ namespace DesktopComponents.Forms
         private bool _cerrarHover;
         private bool _minimizarHover;
         private bool _maximizarHover;
+        private bool _estaActiva = true;
 
         /// <summary>
         /// Si es <c>true</c>, la ventana agrega un botón maximizar/restaurar,
         /// admite arrastrar sus bordes para cambiar de tamaño, y doble clic en
-        /// la barra de título maximiza/restaura — igual que una ventana nativa
-        /// con <see cref="FormBorderStyle.Sizable"/>. Por defecto en
-        /// <c>false</c>: el resto de las pantallas (diálogos, Login,
-        /// Historial...) mantiene su tamaño fijo de siempre.
+        /// la barra de título maximiza/restaura.
         /// </summary>
         public bool Redimensionable { get; set; }
+
+        // Sombra nativa DWM para todas las ventanas con FormBorderStyle.None.
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                var cp = base.CreateParams;
+                if (!DesignMode)
+                    cp.ClassStyle |= CS_DROPSHADOW;
+                return cp;
+            }
+        }
 
         public MetroForm()
         {
@@ -82,26 +95,51 @@ namespace DesktopComponents.Forms
             AplicarTema(ThemeManager.Actual);
         }
 
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            _estaActiva = true;
+            Invalidate();
+        }
+
+        protected override void OnDeactivate(EventArgs e)
+        {
+            base.OnDeactivate(e);
+            _estaActiva = false;
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
             var tema = ThemeManager.Actual;
+            var g = e.Graphics;
+            GraficosX.PrepararAlta(g);
+
             var altoBarra = LogicalToDeviceUnits(AltoBarraTituloLogico);
 
-            using (var pincelBarra = new SolidBrush(tema.SuperficieElevada))
-                e.Graphics.FillRectangle(pincelBarra, new Rectangle(0, 0, Width, altoBarra));
+            // Título — se oscurece sutilmente cuando la ventana pierde el foco.
+            var colorBarra = _estaActiva
+                ? tema.SuperficieElevada
+                : Theme.Mezclar(tema.SuperficieElevada, tema.Superficie, 0.45f);
 
+            using (var pincelBarra = new SolidBrush(colorBarra))
+                g.FillRectangle(pincelBarra, new Rectangle(0, 0, Width, altoBarra));
+
+            var colorTitulo = _estaActiva ? tema.TextoPrimario : tema.TextoSecundario;
             TextRenderer.DrawText(
-                e.Graphics, Text, Font,
-                new Rectangle(LogicalToDeviceUnits(12), 0, Width - LogicalToDeviceUnits(100), altoBarra),
-                tema.TextoPrimario,
-                TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+                g, Text, Font,
+                new Rectangle(LogicalToDeviceUnits(12), 0, Width - LogicalToDeviceUnits(120), altoBarra),
+                colorTitulo,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.Left |
+                TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
 
             var ladoBoton = LogicalToDeviceUnits(24);
             var margenSuperior = (altoBarra - ladoBoton) / 2;
 
-            _rectBotonCerrar = new Rectangle(Width - ladoBoton - LogicalToDeviceUnits(10), margenSuperior, ladoBoton, ladoBoton);
+            _rectBotonCerrar = new Rectangle(
+                Width - ladoBoton - LogicalToDeviceUnits(10), margenSuperior, ladoBoton, ladoBoton);
             _rectBotonMaximizar = Redimensionable
                 ? new Rectangle(_rectBotonCerrar.X - ladoBoton - LogicalToDeviceUnits(6), margenSuperior, ladoBoton, ladoBoton)
                 : Rectangle.Empty;
@@ -110,25 +148,33 @@ namespace DesktopComponents.Forms
                 ? new Rectangle(origenMinimizar - ladoBoton - LogicalToDeviceUnits(6), margenSuperior, ladoBoton, ladoBoton)
                 : Rectangle.Empty;
 
-            DibujarBotonVentana(e.Graphics, _rectBotonCerrar, "✕", _cerrarHover, tema.Peligro, tema);
+            DibujarBotonVentana(g, _rectBotonCerrar,    "✕", _cerrarHover,    tema.Peligro, tema, _estaActiva);
             if (MinimizeBox)
-                DibujarBotonVentana(e.Graphics, _rectBotonMinimizar, "–", _minimizarHover, tema.Acento, tema);
+                DibujarBotonVentana(g, _rectBotonMinimizar, "–", _minimizarHover, tema.Acento,  tema, _estaActiva);
             if (Redimensionable)
-                DibujarBotonVentana(e.Graphics, _rectBotonMaximizar, WindowState == FormWindowState.Maximized ? "❐" : "□", _maximizarHover, tema.Acento, tema);
+                DibujarBotonVentana(g, _rectBotonMaximizar,
+                    WindowState == FormWindowState.Maximized ? "❐" : "□",
+                    _maximizarHover, tema.Acento, tema, _estaActiva);
 
-            using (var lapizBorde = new Pen(Theme.Mezclar(tema.Borde, tema.Superficie, 0.5f)))
-                e.Graphics.DrawRectangle(lapizBorde, new Rectangle(0, 0, Width - 1, Height - 1));
+            // Borde — visible y consistente; más sutil en ventana inactiva.
+            var colorBorde = _estaActiva
+                ? tema.BordereReposo
+                : Theme.Mezclar(tema.BordereReposo, tema.Superficie, 0.4f);
+            using (var lapizBorde = new Pen(colorBorde))
+                g.DrawRectangle(lapizBorde, new Rectangle(0, 0, Width - 1, Height - 1));
         }
 
-        private static void DibujarBotonVentana(Graphics g, Rectangle rect, string simbolo, bool hover, Color colorHover, Theme tema)
+        private static void DibujarBotonVentana(
+            Graphics g, Rectangle rect, string simbolo, bool hover, Color colorHover, Theme tema, bool activa)
         {
             if (hover)
             {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 using (var pincel = new SolidBrush(colorHover))
                     g.FillEllipse(pincel, rect);
             }
 
-            var colorTexto = hover ? Color.White : tema.TextoSecundario;
+            var colorTexto = hover ? Color.White : (activa ? tema.TextoSecundario : tema.BordereReposo);
             using (var fuente = new Font("Segoe UI", 9f))
             {
                 TextRenderer.DrawText(g, simbolo, fuente, rect, colorTexto,
@@ -140,15 +186,15 @@ namespace DesktopComponents.Forms
         {
             base.OnMouseMove(e);
 
-            var cerrarHoverAntes = _cerrarHover;
-            var minimizarHoverAntes = _minimizarHover;
-            var maximizarHoverAntes = _maximizarHover;
+            var cerrarAntes    = _cerrarHover;
+            var minimizarAntes = _minimizarHover;
+            var maximizarAntes = _maximizarHover;
 
-            _cerrarHover = _rectBotonCerrar.Contains(e.Location);
+            _cerrarHover    = _rectBotonCerrar.Contains(e.Location);
             _minimizarHover = _rectBotonMinimizar.Contains(e.Location);
             _maximizarHover = _rectBotonMaximizar.Contains(e.Location);
 
-            if (_cerrarHover != cerrarHoverAntes || _minimizarHover != minimizarHoverAntes || _maximizarHover != maximizarHoverAntes)
+            if (_cerrarHover != cerrarAntes || _minimizarHover != minimizarAntes || _maximizarHover != maximizarAntes)
                 Invalidate();
         }
 
@@ -175,15 +221,13 @@ namespace DesktopComponents.Forms
 
         private void AlternarMaximizado()
         {
-            WindowState = WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+            WindowState = WindowState == FormWindowState.Maximized
+                ? FormWindowState.Normal
+                : FormWindowState.Maximized;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct PUNTO
-        {
-            public int X;
-            public int Y;
-        }
+        private struct PUNTO { public int X; public int Y; }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct MINMAXINFO
@@ -201,19 +245,15 @@ namespace DesktopComponents.Forms
 
             if (m.Msg == WM_GETMINMAXINFO && Redimensionable)
             {
-                // Sin esto, un formulario con FormBorderStyle.None se maximiza
-                // contra el tamaño físico completo de la pantalla y termina
-                // tapando la barra de tareas — hay que forzarlo contra el
-                // área de trabajo real de la pantalla donde está la ventana.
-                var pantalla = Screen.FromHandle(Handle);
+                var pantalla    = Screen.FromHandle(Handle);
                 var areaTrabajo = pantalla.WorkingArea;
-                var limitesPantalla = pantalla.Bounds;
+                var limites     = pantalla.Bounds;
 
                 var info = (MINMAXINFO)Marshal.PtrToStructure(m.LParam, typeof(MINMAXINFO));
-                info.ptPosicionMaxima.X = areaTrabajo.X - limitesPantalla.X;
-                info.ptPosicionMaxima.Y = areaTrabajo.Y - limitesPantalla.Y;
-                info.ptTamanoMaximo.X = areaTrabajo.Width;
-                info.ptTamanoMaximo.Y = areaTrabajo.Height;
+                info.ptPosicionMaxima.X          = areaTrabajo.X - limites.X;
+                info.ptPosicionMaxima.Y          = areaTrabajo.Y - limites.Y;
+                info.ptTamanoMaximo.X            = areaTrabajo.Width;
+                info.ptTamanoMaximo.Y            = areaTrabajo.Height;
                 info.ptTamanoMaximoSeguimiento.X = areaTrabajo.Width;
                 info.ptTamanoMaximoSeguimiento.Y = areaTrabajo.Height;
                 Marshal.StructureToPtr(info, m.LParam, true);
@@ -222,48 +262,51 @@ namespace DesktopComponents.Forms
 
             if (m.Msg == WM_LBUTTONDBLCLK && Redimensionable)
             {
-                var punto = PointToClient(new Point(m.LParam.ToInt32() & 0xFFFF, (m.LParam.ToInt32() >> 16) & 0xFFFF));
-                var altoBarraDoble = LogicalToDeviceUnits(AltoBarraTituloLogico);
-                if (punto.Y < altoBarraDoble && !_rectBotonCerrar.Contains(punto) && !_rectBotonMinimizar.Contains(punto) && !_rectBotonMaximizar.Contains(punto))
+                var punto     = PointToClient(new Point(m.LParam.ToInt32() & 0xFFFF, (m.LParam.ToInt32() >> 16) & 0xFFFF));
+                var altoBarra = LogicalToDeviceUnits(AltoBarraTituloLogico);
+                if (punto.Y < altoBarra &&
+                    !_rectBotonCerrar.Contains(punto) &&
+                    !_rectBotonMinimizar.Contains(punto) &&
+                    !_rectBotonMaximizar.Contains(punto))
                     AlternarMaximizado();
                 return;
             }
 
-            if (m.Msg != WM_NCHITTEST)
-                return;
+            if (m.Msg != WM_NCHITTEST) return;
 
             if ((int)m.Result == HTCLIENT)
             {
-                var punto = PointToClient(new Point(m.LParam.ToInt32()));
+                var punto     = PointToClient(new Point(m.LParam.ToInt32()));
                 var altoBarra = LogicalToDeviceUnits(AltoBarraTituloLogico);
 
-                if (punto.Y < altoBarra && !_rectBotonCerrar.Contains(punto) && !_rectBotonMinimizar.Contains(punto) && !_rectBotonMaximizar.Contains(punto))
+                if (punto.Y < altoBarra &&
+                    !_rectBotonCerrar.Contains(punto) &&
+                    !_rectBotonMinimizar.Contains(punto) &&
+                    !_rectBotonMaximizar.Contains(punto))
                 {
                     m.Result = (IntPtr)HTCAPTION;
                     return;
                 }
             }
 
-            if (!Redimensionable || WindowState == FormWindowState.Maximized)
-                return;
+            if (!Redimensionable || WindowState == FormWindowState.Maximized) return;
 
             var margen = LogicalToDeviceUnits(6);
-            var puntoPantalla = new Point(m.LParam.ToInt32());
-            var local = PointToClient(puntoPantalla);
+            var local  = PointToClient(new Point(m.LParam.ToInt32()));
 
             var enIzquierda = local.X <= margen;
-            var enDerecha = local.X >= Width - margen;
-            var enArriba = local.Y <= margen;
-            var enAbajo = local.Y >= Height - margen;
+            var enDerecha   = local.X >= Width - margen;
+            var enArriba    = local.Y <= margen;
+            var enAbajo     = local.Y >= Height - margen;
 
-            if (enIzquierda && enArriba) m.Result = (IntPtr)HTTOPLEFT;
-            else if (enDerecha && enArriba) m.Result = (IntPtr)HTTOPRIGHT;
-            else if (enIzquierda && enAbajo) m.Result = (IntPtr)HTBOTTOMLEFT;
-            else if (enDerecha && enAbajo) m.Result = (IntPtr)HTBOTTOMRIGHT;
-            else if (enIzquierda) m.Result = (IntPtr)HTLEFT;
-            else if (enDerecha) m.Result = (IntPtr)HTRIGHT;
-            else if (enArriba) m.Result = (IntPtr)HTTOP;
-            else if (enAbajo) m.Result = (IntPtr)HTBOTTOM;
+            if      (enIzquierda && enArriba) m.Result = (IntPtr)HTTOPLEFT;
+            else if (enDerecha   && enArriba) m.Result = (IntPtr)HTTOPRIGHT;
+            else if (enIzquierda && enAbajo)  m.Result = (IntPtr)HTBOTTOMLEFT;
+            else if (enDerecha   && enAbajo)  m.Result = (IntPtr)HTBOTTOMRIGHT;
+            else if (enIzquierda)             m.Result = (IntPtr)HTLEFT;
+            else if (enDerecha)               m.Result = (IntPtr)HTRIGHT;
+            else if (enArriba)                m.Result = (IntPtr)HTTOP;
+            else if (enAbajo)                 m.Result = (IntPtr)HTBOTTOM;
         }
     }
 }

@@ -12,8 +12,8 @@ namespace DesktopComponents.Forms
 {
     /// <summary>
     /// Aviso tipo "toast" (esquina inferior derecha, se cierra solo) para
-    /// notificar el fin de un despliegue sin bloquear con un MessageBox modal
-    /// (sección 9 del análisis). Uso: <c>NotificationX.Mostrar(titulo, mensaje, tipo)</c>.
+    /// notificar el fin de un despliegue sin bloquear con un MessageBox modal.
+    /// Uso: <c>NotificationX.Mostrar(titulo, mensaje, tipo)</c>.
     /// </summary>
     [DesignerCategory("")]
     public sealed class NotificationX : Form, IThemedControl
@@ -30,9 +30,9 @@ namespace DesktopComponents.Forms
 
         private NotificationX(string titulo, string mensaje, TipoNotificacion tipo)
         {
-            _titulo = titulo;
+            _titulo  = titulo;
             _mensaje = mensaje;
-            _tipo = tipo;
+            _tipo    = tipo;
 
             SetStyle(
                 ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
@@ -40,15 +40,15 @@ namespace DesktopComponents.Forms
                 true);
 
             FormBorderStyle = FormBorderStyle.None;
-            StartPosition = FormStartPosition.Manual;
-            ShowInTaskbar = false;
-            TopMost = true;
-            Font = new Font("Segoe UI", 9.5f);
-            Size = new Size(LogicalToDeviceUnits(320), LogicalToDeviceUnits(84));
-            Opacity = 0;
+            StartPosition   = FormStartPosition.Manual;
+            ShowInTaskbar   = false;
+            TopMost         = true;
+            Font            = new Font("Segoe UI", 9.5f);
+            Size            = new Size(LogicalToDeviceUnits(320), LogicalToDeviceUnits(84));
+            Opacity         = 0;
 
-            var area = Screen.PrimaryScreen.WorkingArea;
-            var margen = LogicalToDeviceUnits(16);
+            var area      = Screen.PrimaryScreen.WorkingArea;
+            var margen    = LogicalToDeviceUnits(16);
             var separacion = LogicalToDeviceUnits(10);
 
             lock (Activas)
@@ -89,25 +89,18 @@ namespace DesktopComponents.Forms
             if (_cerrando)
             {
                 Opacity = Math.Max(0, Opacity - 0.12);
-                if (Opacity <= 0)
-                {
-                    _timerAnimacion.Stop();
-                    Close();
-                }
+                if (Opacity <= 0) { _timerAnimacion.Stop(); Close(); }
             }
             else
             {
                 Opacity = Math.Min(1, Opacity + 0.12);
-                if (Opacity >= 1)
-                    _timerAnimacion.Stop();
+                if (Opacity >= 1) _timerAnimacion.Stop();
             }
         }
 
         private void Cerrar()
         {
-            if (_cerrando)
-                return;
-
+            if (_cerrando) return;
             _cerrando = true;
             _timerAutoOcultar.Stop();
             _timerAnimacion.Start();
@@ -117,32 +110,31 @@ namespace DesktopComponents.Forms
         {
             lock (Activas)
                 Activas.Remove(this);
-
             base.OnFormClosed(e);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var tema = ThemeManager.Actual;
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g    = e.Graphics;
+            GraficosX.PrepararAlta(g);
 
             var radio = LogicalToDeviceUnits(16);
-            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            var rect  = new Rectangle(0, 0, Width - 1, Height - 1);
 
             using (var ruta = Dibujo.RutaRedondeada(rect, radio))
             {
                 using (var pincelFondo = new SolidBrush(tema.SuperficieElevada))
                     g.FillPath(pincelFondo, ruta);
 
-                // Barra de acento superior (4dp, clipeada a la forma redondeada)
+                // Barra de acento superior (4 dp), clipeada a la forma redondeada.
                 var estadoClip = g.Save();
                 g.SetClip(ruta);
                 using (var pincelAcento = new SolidBrush(ColorSegunTipo(tema)))
                     g.FillRectangle(pincelAcento, new Rectangle(0, 0, Width, LogicalToDeviceUnits(4)));
                 g.Restore(estadoClip);
 
-                using (var lapizBorde = new Pen(Theme.Mezclar(tema.Borde, tema.SuperficieElevada, 0.4f)))
+                using (var lapizBorde = new Pen(tema.BordereReposo))
                     g.DrawPath(lapizBorde, ruta);
             }
 
@@ -167,14 +159,10 @@ namespace DesktopComponents.Forms
         {
             switch (_tipo)
             {
-                case TipoNotificacion.Exito:
-                    return tema.Exito;
-                case TipoNotificacion.Advertencia:
-                    return tema.Advertencia;
-                case TipoNotificacion.Error:
-                    return tema.Peligro;
-                default:
-                    return tema.Acento;
+                case TipoNotificacion.Exito:       return tema.Exito;
+                case TipoNotificacion.Advertencia: return tema.Advertencia;
+                case TipoNotificacion.Error:       return tema.Peligro;
+                default:                           return tema.Acento;
             }
         }
 
@@ -186,7 +174,6 @@ namespace DesktopComponents.Forms
                 _timerAutoOcultar?.Dispose();
                 _suscripcionTema.Dispose();
             }
-
             base.Dispose(disposing);
         }
     }

@@ -31,10 +31,10 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            _radio = LogicalToDeviceUnits(12);
+            _radio      = LogicalToDeviceUnits(12);
             _altoTitulo = LogicalToDeviceUnits(30);
-            Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
-            Padding = new Padding(
+            Font        = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            Padding     = new Padding(
                 LogicalToDeviceUnits(14), _altoTitulo + LogicalToDeviceUnits(6),
                 LogicalToDeviceUnits(14), LogicalToDeviceUnits(14));
 
@@ -47,15 +47,6 @@ namespace DesktopComponents.Controls
             Invalidate();
         }
 
-        protected override void OnPaintBackground(PaintEventArgs pevent)
-        {
-            // Muestra el color del padre en las esquinas exteriores al borde
-            // redondeado, evitando que aparezca el BackColor del control.
-            var bgColor = Parent?.BackColor ?? ThemeManager.Actual.Fondo;
-            using (var pincel = new SolidBrush(bgColor))
-                pevent.Graphics.FillRectangle(pincel, ClientRectangle);
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -64,19 +55,28 @@ namespace DesktopComponents.Controls
             base.Dispose(disposing);
         }
 
+        protected override void OnPaintBackground(PaintEventArgs pevent)
+        {
+            // Las esquinas exteriores al borde redondeado muestran el fondo del
+            // padre, evitando que aparezca el BackColor del control en esas áreas.
+            var bgColor = Parent?.BackColor ?? ThemeManager.Actual.Fondo;
+            using (var pincel = new SolidBrush(bgColor))
+                pevent.Graphics.FillRectangle(pincel, ClientRectangle);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var tema = ThemeManager.Actual;
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            GraficosX.PrepararAlta(e.Graphics);
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
 
-            using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
+            using (var ruta        = Dibujo.RutaRedondeada(rect, _radio))
             using (var pincelFondo = new SolidBrush(tema.Superficie))
-            using (var lapizBorde = new Pen(Theme.Mezclar(tema.Borde, tema.Superficie, 0.4f)))
+            using (var lapizBorde  = new Pen(tema.BordereReposo))
             {
                 e.Graphics.FillPath(pincelFondo, ruta);
-                e.Graphics.DrawPath(lapizBorde, ruta);
+                e.Graphics.DrawPath(lapizBorde,  ruta);
             }
 
             if (!string.IsNullOrEmpty(_titulo))

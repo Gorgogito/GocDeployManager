@@ -10,8 +10,7 @@ namespace DesktopComponents.Controls
     /// <summary>
     /// Envuelve un TextBox nativo sin borde dentro de un panel con borde/fondo
     /// pintados a mano — así el caret, la selección y el IME siguen siendo
-    /// los del control nativo (reimplementar edición de texto desde cero es
-    /// un riesgo innecesario), y solo el chrome visual es propio.
+    /// los del control nativo, y solo el chrome visual es propio.
     /// </summary>
     [DesignerCategory("")]
     public sealed class TextBoxX : Panel, IThemedControl
@@ -42,7 +41,7 @@ namespace DesktopComponents.Controls
 
         public event EventHandler TextoCambiado
         {
-            add => _interno.TextChanged += value;
+            add    => _interno.TextChanged += value;
             remove => _interno.TextChanged -= value;
         }
 
@@ -53,18 +52,20 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            _radio = LogicalToDeviceUnits(6);
-            Height = LogicalToDeviceUnits(34);
-            Padding = new Padding(LogicalToDeviceUnits(10), LogicalToDeviceUnits(7), LogicalToDeviceUnits(10), LogicalToDeviceUnits(7));
+            _radio  = LogicalToDeviceUnits(6);
+            Height  = LogicalToDeviceUnits(34);
+            Padding = new Padding(
+                LogicalToDeviceUnits(10), LogicalToDeviceUnits(7),
+                LogicalToDeviceUnits(10), LogicalToDeviceUnits(7));
 
             _interno = new TextBox
             {
                 BorderStyle = BorderStyle.None,
-                Font = new Font("Segoe UI", 9.5f),
-                Dock = DockStyle.Fill,
+                Font        = new Font("Segoe UI", 9.5f),
+                Dock        = DockStyle.Fill,
             };
-            _interno.GotFocus += (s, e) => { _tieneFoco = true; Invalidate(); };
-            _interno.LostFocus += (s, e) => { _tieneFoco = false; Invalidate(); };
+            _interno.GotFocus   += (s, e) => { _tieneFoco = true;  Invalidate(); };
+            _interno.LostFocus  += (s, e) => { _tieneFoco = false; Invalidate(); };
             _interno.TextChanged += (s, e) => Invalidate();
 
             Controls.Add(_interno);
@@ -85,22 +86,34 @@ namespace DesktopComponents.Controls
         {
             _interno.BackColor = tema.Superficie;
             _interno.ForeColor = tema.TextoPrimario;
-            BackColor = tema.Superficie;
+            BackColor          = tema.Superficie;
             Invalidate();
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs pevent)
+        {
+            // Las esquinas exteriores al borde redondeado muestran el color del
+            // padre, haciéndolas transparentes visualmente sobre cualquier fondo.
+            var bgColor = Parent?.BackColor ?? ThemeManager.Actual.Superficie;
+            using (var pincel = new SolidBrush(bgColor))
+                pevent.Graphics.FillRectangle(pincel, ClientRectangle);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var tema = ThemeManager.Actual;
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            GraficosX.PrepararAlta(e.Graphics);
+
+            var colorBorde = _tieneFoco ? tema.Acento : tema.BordereReposo;
+            var anchoBorde = _tieneFoco ? 2f : 1f;
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (var ruta = Dibujo.RutaRedondeada(rect, _radio))
-            using (var pincelFondo = new SolidBrush(tema.Superficie))
-            using (var lapizBorde = new Pen(_tieneFoco ? tema.Acento : tema.Borde, _tieneFoco ? 2f : 1f))
+            using (var ruta         = Dibujo.RutaRedondeada(rect, _radio))
+            using (var pincelFondo  = new SolidBrush(tema.Superficie))
+            using (var lapizBorde   = new Pen(colorBorde, anchoBorde))
             {
                 e.Graphics.FillPath(pincelFondo, ruta);
-                e.Graphics.DrawPath(lapizBorde, ruta);
+                e.Graphics.DrawPath(lapizBorde,  ruta);
             }
 
             if (string.IsNullOrEmpty(_interno.Text) && !string.IsNullOrEmpty(_textoMarcador) && !_tieneFoco)

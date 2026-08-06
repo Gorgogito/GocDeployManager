@@ -10,6 +10,7 @@ namespace DesktopComponents.Theming
         public Color Superficie { get; }
         public Color SuperficieElevada { get; }
         public Color Borde { get; }
+        public Color BordereReposo { get; }
         public Color TextoPrimario { get; }
         public Color TextoSecundario { get; }
         public Color Acento { get; }
@@ -25,6 +26,7 @@ namespace DesktopComponents.Theming
             Color superficie,
             Color superficieElevada,
             Color borde,
+            Color bordereReposo,
             Color textoPrimario,
             Color textoSecundario,
             Color acento,
@@ -39,6 +41,7 @@ namespace DesktopComponents.Theming
             Superficie = superficie;
             SuperficieElevada = superficieElevada;
             Borde = borde;
+            BordereReposo = bordereReposo;
             TextoPrimario = textoPrimario;
             TextoSecundario = textoSecundario;
             Acento = acento;
@@ -63,8 +66,9 @@ namespace DesktopComponents.Theming
             "Claro",
             fondo:             Color.FromArgb(0xF4, 0xF4, 0xF8),
             superficie:        Color.FromArgb(0xFE, 0xFB, 0xFF),
-            superficieElevada: Color.FromArgb(0xEA, 0xF0, 0xFF),
+            superficieElevada: Color.FromArgb(0xEC, 0xF0, 0xFF),
             borde:             Color.FromArgb(0x79, 0x74, 0x7E),
+            bordereReposo:     Color.FromArgb(0xCA, 0xC4, 0xD0),
             textoPrimario:     Color.FromArgb(0x1C, 0x1B, 0x1F),
             textoSecundario:   Color.FromArgb(0x49, 0x45, 0x4F),
             acento:            Color.FromArgb(0x15, 0x65, 0xC0),
@@ -81,6 +85,7 @@ namespace DesktopComponents.Theming
             superficie:        Color.FromArgb(0x1C, 0x1B, 0x1F),
             superficieElevada: Color.FromArgb(0x28, 0x28, 0x31),
             borde:             Color.FromArgb(0x93, 0x8F, 0x99),
+            bordereReposo:     Color.FromArgb(0x49, 0x45, 0x4F),
             textoPrimario:     Color.FromArgb(0xE6, 0xE1, 0xE5),
             textoSecundario:   Color.FromArgb(0xCA, 0xC4, 0xD0),
             acento:            Color.FromArgb(0xAD, 0xC6, 0xFF),

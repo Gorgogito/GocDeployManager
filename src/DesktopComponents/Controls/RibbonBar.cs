@@ -6,10 +6,9 @@ using DesktopComponents.Theming;
 namespace DesktopComponents.Controls
 {
     /// <summary>
-    /// Franja superior de acciones de la pantalla principal (entrada de GOC,
-    /// selección de ambiente/sistema, botón de iniciar despliegue). No intenta
-    /// ser un Ribbon de Office completo con pestañas — es un contenedor propio
-    /// que acomoda controles de izquierda a derecha con separación consistente.
+    /// Franja superior de acciones de la pantalla principal. Contenedor
+    /// horizontal que ubica controles de izquierda a derecha con separación
+    /// consistente. No intenta ser un Ribbon completo de Office.
     /// </summary>
     [DesignerCategory("")]
     public sealed class RibbonBar : Control, IThemedControl
@@ -25,9 +24,9 @@ namespace DesktopComponents.Controls
                 ControlStyles.UserPaint | ControlStyles.ResizeRedraw,
                 true);
 
-            Dock = DockStyle.Top;
-            Height = LogicalToDeviceUnits(56);
-            Padding = new Padding(LogicalToDeviceUnits(16), LogicalToDeviceUnits(10), LogicalToDeviceUnits(16), LogicalToDeviceUnits(10));
+            Dock      = DockStyle.Top;
+            Height    = LogicalToDeviceUnits(56);
+            Padding   = new Padding(LogicalToDeviceUnits(16), LogicalToDeviceUnits(10), LogicalToDeviceUnits(16), LogicalToDeviceUnits(10));
             _espaciado = LogicalToDeviceUnits(12);
 
             _suscripcionTema = new SuscripcionTema(AplicarTema);
@@ -37,7 +36,6 @@ namespace DesktopComponents.Controls
         {
             if (disposing)
                 _suscripcionTema.Dispose();
-
             base.Dispose(disposing);
         }
 
@@ -72,7 +70,7 @@ namespace DesktopComponents.Controls
             using (var pincelFondo = new SolidBrush(tema.SuperficieElevada))
                 e.Graphics.FillRectangle(pincelFondo, ClientRectangle);
 
-            using (var lapizBorde = new Pen(tema.Borde))
+            using (var lapizBorde = new Pen(tema.BordereReposo))
                 e.Graphics.DrawLine(lapizBorde, 0, Height - 1, Width, Height - 1);
         }
     }

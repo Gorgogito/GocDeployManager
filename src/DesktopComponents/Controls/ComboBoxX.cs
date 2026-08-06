@@ -9,11 +9,11 @@ using DesktopComponents.Theming;
 namespace DesktopComponents.Controls
 {
     /// <summary>
-    /// ComboBox de solo selección (sin edición libre) con lista desplegable
-    /// pintada a mano según el tema activo. Windows ignora BackColor en un
-    /// DropDownList mientras tenga el tema visual nativo activo (se ve blanco
-    /// siempre, sin importar el tema oscuro/claro de la app); se desactiva ese
-    /// tema nativo vía SetWindowTheme para que el color sí se aplique.
+    /// ComboBox de solo selección con lista desplegable pintada a mano según
+    /// el tema activo. Se neutraliza el tema visual nativo con SetWindowTheme
+    /// para que BackColor y ForeColor se apliquen correctamente.
+    /// La flecha chevron se pinta encima del botón nativo para mantener
+    /// consistencia visual con el resto de los controles.
     /// </summary>
     [DesignerCategory("")]
     public sealed class ComboBoxX : ComboBox, IThemedControl
@@ -25,17 +25,11 @@ namespace DesktopComponents.Controls
 
         public ComboBoxX()
         {
-            // A diferencia de ButtonX, ComboBox envuelve una ventana nativa de
-            // Windows que depende de su propio dibujo interno: activar
-            // ControlStyles.UserPaint aquí lo deja completamente en blanco,
-            // porque WinForms deja de invocar el dibujo nativo y nada lo
-            // reemplaza. El look propio se logra solo con FlatStyle + OwnerDraw
-            // + SetWindowTheme.
             DropDownStyle = ComboBoxStyle.DropDownList;
-            DrawMode = DrawMode.OwnerDrawFixed;
-            FlatStyle = FlatStyle.Flat;
-            Font = new Font("Segoe UI", 9.5f);
-            ItemHeight = LogicalToDeviceUnits(22);
+            DrawMode      = DrawMode.OwnerDrawFixed;
+            FlatStyle     = FlatStyle.Flat;
+            Font          = new Font("Segoe UI", 9.5f);
+            ItemHeight    = LogicalToDeviceUnits(22);
 
             _suscripcionTema = new SuscripcionTema(AplicarTema);
         }
@@ -64,7 +58,7 @@ namespace DesktopComponents.Controls
 
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
-            var tema = ThemeManager.Actual;
+            var tema        = ThemeManager.Actual;
             var seleccionado = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
 
             var colorFondo = seleccionado ? tema.Acento : tema.Superficie;
@@ -77,8 +71,9 @@ namespace DesktopComponents.Controls
             {
                 TextRenderer.DrawText(
                     e.Graphics, GetItemText(Items[e.Index]), Font, e.Bounds, colorTexto,
-                    TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding |
-                    TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+                    TextFormatFlags.VerticalCenter | TextFormatFlags.Left |
+                    TextFormatFlags.LeftAndRightPadding | TextFormatFlags.SingleLine |
+                    TextFormatFlags.EndEllipsis);
             }
 
             e.DrawFocusRectangle();
@@ -87,11 +82,44 @@ namespace DesktopComponents.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            var tema = ThemeManager.Actual;
+
+            var tema    = ThemeManager.Actual;
+            var g       = e.Graphics;
+            GraficosX.PrepararAlta(g);
+
+            // Ancho del área de botón desplegable del ComboBox nativo.
+            var anchoBoton = SystemInformation.VerticalScrollBarWidth;
+            var rectBoton  = new Rectangle(Width - anchoBoton, 0, anchoBoton, Height);
+
+            // Cubrir el botón nativo con nuestros colores.
+            using (var pincelFondo = new SolidBrush(tema.Superficie))
+                g.FillRectangle(pincelFondo, rectBoton);
+
+            // Línea separadora vertical sutil.
+            using (var lapizSep = new Pen(tema.BordereReposo))
+                g.DrawLine(lapizSep, rectBoton.Left, rectBoton.Top + 5, rectBoton.Left, rectBoton.Bottom - 5);
+
+            // Chevron propio.
+            var cx   = rectBoton.Left + rectBoton.Width / 2;
+            var cy   = rectBoton.Top  + rectBoton.Height / 2 - 1;
+            var size = LogicalToDeviceUnits(4);
+
+            using (var lapiz = new Pen(tema.TextoSecundario, 1.5f)
+            {
+                LineJoin   = LineJoin.Round,
+                StartCap   = LineCap.Round,
+                EndCap     = LineCap.Round,
+            })
+            {
+                g.DrawLine(lapiz, cx - size, cy - 1, cx, cy + size - 1);
+                g.DrawLine(lapiz, cx,        cy + size - 1, cx + size, cy - 1);
+            }
+
+            // Borde exterior redondeado.
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (var ruta = Dibujo.RutaRedondeada(rect, LogicalToDeviceUnits(4)))
-            using (var lapizBorde = new Pen(tema.Borde))
-                e.Graphics.DrawPath(lapizBorde, ruta);
+            using (var ruta       = Dibujo.RutaRedondeada(rect, LogicalToDeviceUnits(4)))
+            using (var lapizBorde = new Pen(tema.BordereReposo))
+                g.DrawPath(lapizBorde, ruta);
         }
     }
 }
