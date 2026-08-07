@@ -4,7 +4,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:ventanas="clr-namespace:GocDeployManager.UI.Ventanas"
         Title="GocDeployManager — Configuración"
-        Width="780" Height="520"
+        Width="820" Height="540"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -23,6 +23,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- ══════════════ BARRA DE TÍTULO ══════════════ -->
         <Grid Grid.Row="0"
               Background="{DynamicResource PrimaryHueMidBrush}"
               MouseDown="TitleBar_MouseDown">
@@ -40,11 +41,476 @@
             </Button>
         </Grid>
 
-        <!-- Contenido — implementado en Fase 4 -->
-        <TextBlock Grid.Row="1"
-                   Text="ConfiguracionWindow — Fase 4"
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                   Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+        <!-- ══════════════ TABS ══════════════ -->
+        <TabControl Grid.Row="1" x:Name="tabControl"
+                    Style="{StaticResource MaterialDesignTabControl}"
+                    SelectionChanged="TabControl_SelectionChanged">
+
+            <!-- ══ TAB 1: AMBIENTES ══ -->
+            <TabItem Header="Ambientes" x:Name="tabAmbientes">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="52"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Lista de ambientes -->
+                    <Border Grid.Column="0" Grid.Row="0"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,0,1,0">
+                        <DataGrid x:Name="gridAmbientes"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserResizeRows="False"
+                                  CanUserSortColumns="False"
+                                  SelectionMode="Single"
+                                  SelectionChanged="GridAmbientes_SelectionChanged"
+                                  BorderThickness="0"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="8,6,8,6">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                                <DataGridTextColumn Header="Sistemas" Binding="{Binding SistemasTexto}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Formulario de edición de ambiente -->
+                    <Grid Grid.Column="1" Grid.Row="0">
+                        <!-- Placeholder cuando no hay selección -->
+                        <TextBlock x:Name="lblPlaceholderAmbiente"
+                                   Text="Selecciona un ambiente de la lista o pulsa NUEVO."
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="13"/>
+
+                        <!-- Formulario de ambiente -->
+                        <ScrollViewer x:Name="panelFormAmbiente"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Visibility="Collapsed">
+                            <StackPanel Margin="16,12,16,8">
+
+                                <TextBlock Text="NOMBRE DEL AMBIENTE"
+                                           Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                           Margin="0,0,0,4"/>
+                                <TextBox x:Name="txtAmbienteNombre"
+                                         materialDesign:HintAssist.Hint="Ej: Producción, Certificación, Desarrollo..."
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="0,0,0,16"/>
+
+                                <DockPanel LastChildFill="False" Margin="0,0,0,4">
+                                    <TextBlock DockPanel.Dock="Left"
+                                               Text="SISTEMAS"
+                                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                               VerticalAlignment="Center"/>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Content="+" Width="30" Height="26" Padding="0"
+                                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                ToolTip="Agregar sistema"
+                                                Click="BtnAgregarSistema_Click"
+                                                Margin="0,0,4,0" FontSize="16" FontWeight="SemiBold"/>
+                                        <Button Content="−" Width="30" Height="26" Padding="0"
+                                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                ToolTip="Eliminar sistema seleccionado"
+                                                Click="BtnEliminarFilaSistema_Click"
+                                                FontSize="16" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </DockPanel>
+                                <DataGrid x:Name="gridAmbienteSistemas"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          CanUserResizeRows="False"
+                                          MaxHeight="200"
+                                          SelectionUnit="FullRow"
+                                          materialDesign:DataGridAssist.ColumnHeaderPadding="8,4,8,4">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Código" Width="80"
+                                            Binding="{Binding Codigo, UpdateSourceTrigger=LostFocus}"/>
+                                        <DataGridTextColumn Header="Nombre" Width="120"
+                                            Binding="{Binding Nombre, UpdateSourceTrigger=LostFocus}"/>
+                                        <DataGridTextColumn Header="Ruta destino" Width="*"
+                                            Binding="{Binding RutaDestino, UpdateSourceTrigger=LostFocus}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Barra de botones inferior -->
+                    <Border Grid.ColumnSpan="2" Grid.Row="1"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,1,0,0"
+                            Padding="12,8">
+                        <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                <Button Content="NUEVO" Width="88" Margin="0,0,8,0"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Click="BtnNuevoAmbiente_Click"/>
+                                <Button Content="GUARDAR" Width="88" Margin="0,0,8,0"
+                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Click="BtnGuardarAmbiente_Click"/>
+                                <Button Content="ELIMINAR" Width="88"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                        BorderBrush="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                        Click="BtnEliminarAmbiente_Click"/>
+                            </StackPanel>
+                            <TextBlock x:Name="lblErrorAmbientes"
+                                       Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       FontSize="12"
+                                       Margin="12,0,0,0"
+                                       Visibility="Collapsed"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ══ TAB 2: BITBUCKET ══ -->
+            <TabItem Header="Bitbucket" x:Name="tabBitbucket">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="52"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Lista de sistemas -->
+                    <Border Grid.Column="0" Grid.Row="0"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,0,1,0">
+                        <DataGrid x:Name="gridSistemas"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserResizeRows="False"
+                                  CanUserSortColumns="False"
+                                  SelectionMode="Single"
+                                  SelectionChanged="GridSistemas_SelectionChanged"
+                                  BorderThickness="0"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="8,6,8,6">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Sistema" Binding="{Binding Codigo}" Width="70"/>
+                                <DataGridTextColumn Header="Repositorio" Binding="{Binding RepositorioCorto}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Formulario de edición de sistema -->
+                    <Grid Grid.Column="1" Grid.Row="0">
+                        <TextBlock x:Name="lblPlaceholderSistema"
+                                   Text="Selecciona un sistema de la lista o pulsa NUEVO."
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="13"/>
+
+                        <ScrollViewer x:Name="panelFormSistema"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Visibility="Collapsed">
+                            <StackPanel Margin="16,12,16,8">
+
+                                <TextBlock Text="IDENTIFICACIÓN"
+                                           Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                           Margin="0,0,0,4"/>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="txtSistemaCodigo" Grid.Column="0"
+                                             materialDesign:HintAssist.Hint="Código (SIT, IDI…)"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             Margin="0,0,8,0"/>
+                                    <TextBox x:Name="txtSistemaNombre" Grid.Column="1"
+                                             materialDesign:HintAssist.Hint="Nombre visible"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </Grid>
+
+                                <TextBlock Text="REPOSITORIO Y BUILD"
+                                           Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                           Margin="0,0,0,4"/>
+                                <TextBox x:Name="txtSistemaRepoUrl"
+                                         materialDesign:HintAssist.Hint="URL del repositorio Bitbucket"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="0,0,0,10"/>
+                                <TextBox x:Name="txtSistemaCarpetaPrecompilada"
+                                         materialDesign:HintAssist.Hint="Carpeta precompilada (ej: SITSolution\PrecompiledWeb\IN-SIT)"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="0,0,0,14"/>
+
+                                <DockPanel LastChildFill="False" Margin="0,0,0,4">
+                                    <TextBlock DockPanel.Dock="Left"
+                                               Text="PASOS DE BUILD"
+                                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                               VerticalAlignment="Center"/>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Content="+" Width="30" Height="26" Padding="0"
+                                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                ToolTip="Agregar paso"
+                                                Click="BtnAgregarPaso_Click"
+                                                Margin="0,0,4,0" FontSize="16" FontWeight="SemiBold"/>
+                                        <Button Content="−" Width="30" Height="26" Padding="0"
+                                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                ToolTip="Eliminar paso seleccionado"
+                                                Click="BtnEliminarFilaPaso_Click"
+                                                FontSize="16" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </DockPanel>
+                                <DataGrid x:Name="gridSistemasPasos"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          CanUserResizeRows="False"
+                                          MaxHeight="180"
+                                          SelectionUnit="FullRow"
+                                          materialDesign:DataGridAssist.ColumnHeaderPadding="8,4,8,4">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Orden" Width="55"
+                                            Binding="{Binding Orden, UpdateSourceTrigger=LostFocus}"/>
+                                        <DataGridTextColumn Header="Carpeta proyecto" Width="*"
+                                            Binding="{Binding CarpetaProyecto, UpdateSourceTrigger=LostFocus}"/>
+                                        <DataGridTextColumn Header="Parámetros MSBuild" Width="160"
+                                            Binding="{Binding ParametrosMsBuild, UpdateSourceTrigger=LostFocus}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Barra de botones inferior -->
+                    <Border Grid.ColumnSpan="2" Grid.Row="1"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,1,0,0"
+                            Padding="12,8">
+                        <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                <Button Content="NUEVO" Width="88" Margin="0,0,8,0"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Click="BtnNuevoSistema_Click"/>
+                                <Button Content="GUARDAR" Width="88" Margin="0,0,8,0"
+                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Click="BtnGuardarSistema_Click"/>
+                                <Button Content="ELIMINAR" Width="88"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                        BorderBrush="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                        Click="BtnEliminarSistema_Click"/>
+                            </StackPanel>
+                            <TextBlock x:Name="lblErrorSistemas"
+                                       Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       FontSize="12"
+                                       Margin="12,0,0,0"
+                                       Visibility="Collapsed"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ══ TAB 3: USUARIOS ══ -->
+            <TabItem Header="Usuarios" x:Name="tabUsuarios">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="380"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="52"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Lista de usuarios -->
+                    <Border Grid.Column="0" Grid.Row="0"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,0,1,0">
+                        <DataGrid x:Name="gridUsuarios"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserResizeRows="False"
+                                  CanUserSortColumns="False"
+                                  SelectionMode="Single"
+                                  SelectionChanged="GridUsuarios_SelectionChanged"
+                                  BorderThickness="0"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="8,6,8,6">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="90"/>
+                                <DataGridTextColumn Header="Nombre visible" Binding="{Binding NombreVisible}" Width="*"/>
+                                <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="80"/>
+                                <DataGridTextColumn Header="Activo" Binding="{Binding Activo}" Width="50"/>
+                                <DataGridTextColumn Header="Bitbucket" Binding="{Binding Bitbucket}" Width="75"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Panel de detalle del usuario -->
+                    <Grid Grid.Column="1" Grid.Row="0">
+                        <TextBlock x:Name="lblPlaceholderUsuario"
+                                   Text="Selecciona un usuario de la lista."
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="13"/>
+
+                        <ScrollViewer x:Name="panelDetalleUsuario"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Visibility="Collapsed">
+                            <StackPanel Margin="16,14,16,8">
+
+                                <TextBlock x:Name="lblUsuarioSeleccionado"
+                                           Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+
+                                <!-- Rol -->
+                                <TextBlock Text="ROL"
+                                           Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                           Margin="0,0,0,4"/>
+                                <DockPanel Margin="0,0,0,14">
+                                    <Button DockPanel.Dock="Right"
+                                            Content="GUARDAR ROL"
+                                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                                            Height="40"
+                                            Click="BtnGuardarRol_Click"/>
+                                    <ComboBox x:Name="comboRolUsuario"
+                                              materialDesign:HintAssist.Hint="Rol"
+                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                              Margin="0,0,8,0"/>
+                                </DockPanel>
+
+                                <!-- Acciones -->
+                                <TextBlock Text="ACCIONES"
+                                           Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                           Margin="0,0,0,8"/>
+                                <Button x:Name="btnActivarDesactivar"
+                                        Content="DESACTIVAR"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        HorizontalAlignment="Left"
+                                        Width="180"
+                                        Margin="0,0,0,8"
+                                        Click="BtnActivarDesactivar_Click"/>
+                                <Button Content="RESETEAR CONTRASEÑA"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        HorizontalAlignment="Left"
+                                        Width="200"
+                                        Margin="0,0,0,8"
+                                        Click="BtnResetearContrasena_Click"/>
+                                <Button Content="CONFIGURAR CREDENCIALES BITBUCKET"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        HorizontalAlignment="Left"
+                                        Width="270"
+                                        Margin="0,0,0,12"
+                                        Click="BtnConfigurarBitbucket_Click"/>
+
+                                <TextBlock x:Name="lblBitbucketEstado"
+                                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Barra de botones inferior -->
+                    <Border Grid.ColumnSpan="2" Grid.Row="1"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,1,0,0"
+                            Padding="12,8">
+                        <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                <Button Content="NUEVO USUARIO" Width="140"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Click="BtnNuevoUsuario_Click"/>
+                            </StackPanel>
+                            <TextBlock x:Name="lblErrorUsuarios"
+                                       Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       FontSize="12"
+                                       Margin="12,0,0,0"
+                                       Visibility="Collapsed"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ══ TAB 4: GENERAL ══ -->
+            <TabItem Header="General" x:Name="tabGeneral">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="24,16,24,20" MaxWidth="620">
+
+                        <TextBlock Text="RUTAS DE LA APLICACIÓN"
+                                   Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                                   Margin="0,0,0,12"/>
+
+                        <TextBlock Text="Ruta de clonado (donde se descargan los GOCs)"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="11" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtRutaClonado"
+                                 materialDesign:HintAssist.Hint="Ej: C:\Deploy\GOCs"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Ruta de archivos temporales"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="11" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtRutaTemporales"
+                                 materialDesign:HintAssist.Hint="Ej: C:\Deploy\Temp"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Ruta de logs"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="11" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtRutaLogs"
+                                 materialDesign:HintAssist.Hint="Ej: C:\Deploy\Logs"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Ruta de configuración (Ambientes.json, Sistemas.json…)"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="11" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtRutaConfiguracion"
+                                 materialDesign:HintAssist.Hint="Ej: C:\Deploy\Config"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,0,14"/>
+
+                        <TextBlock Text="Cadena de conexión SQL Server (usuarios e historial)"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="11" Margin="0,0,0,4"/>
+                        <TextBox x:Name="txtCadenaConexion"
+                                 materialDesign:HintAssist.Hint="Server=...;Database=...;User Id=...;Password=..."
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,0,16"/>
+
+                        <TextBlock x:Name="lblErrorGeneral"
+                                   Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                   TextWrapping="Wrap"
+                                   FontSize="12"
+                                   Visibility="Collapsed"
+                                   Margin="0,0,0,10"/>
+
+                        <Button Content="GUARDAR CONFIGURACIÓN" Width="220"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Height="40"
+                                Click="BtnGuardarGeneral_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Snackbar para notificaciones de éxito -->
+        <materialDesign:Snackbar Grid.Row="1" x:Name="snackbar"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Bottom"
+                                  Panel.ZIndex="200"/>
     </Grid>
 </ventanas:VentanaBase>

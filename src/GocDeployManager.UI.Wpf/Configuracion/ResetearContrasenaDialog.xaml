@@ -1,0 +1,77 @@
+<ventanas:VentanaBase x:Class="GocDeployManager.UI.Configuracion.ResetearContrasenaDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:ventanas="clr-namespace:GocDeployManager.UI.Ventanas"
+        Title="GocDeployManager — Resetear contraseña"
+        Width="380" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="36" CornerRadius="0"
+                      GlassFrameThickness="0" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de título -->
+        <Grid Grid.Row="0"
+              Background="{DynamicResource PrimaryHueMidBrush}"
+              MouseDown="TitleBar_MouseDown">
+            <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=Title}"
+                       VerticalAlignment="Center" Margin="14,0"
+                       Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                       FontSize="13"/>
+            <Button HorizontalAlignment="Right"
+                    Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="CloseButton_Click"
+                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                    Width="46" Height="36" Padding="0">
+                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+            </Button>
+        </Grid>
+
+        <!-- Formulario -->
+        <StackPanel Grid.Row="1" Margin="28,20,28,24">
+
+            <TextBlock x:Name="lblSubtitulo"
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20"/>
+
+            <PasswordBox x:Name="txtNuevaContrasena"
+                         materialDesign:HintAssist.Hint="Nueva contraseña"
+                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                         Margin="0,0,0,14"/>
+
+            <PasswordBox x:Name="txtConfirmar"
+                         materialDesign:HintAssist.Hint="Confirmar contraseña"
+                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                         Margin="0,0,0,10"/>
+
+            <TextBlock x:Name="lblError"
+                       Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                       TextWrapping="Wrap"
+                       Visibility="Collapsed"
+                       FontSize="12"
+                       Margin="0,0,0,10"/>
+
+            <Button x:Name="btnResetear"
+                    Content="RESETEAR CONTRASEÑA"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Height="40"
+                    IsDefault="True"
+                    Click="BtnResetear_Click"/>
+        </StackPanel>
+    </Grid>
+</ventanas:VentanaBase>
