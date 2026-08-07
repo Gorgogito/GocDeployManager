@@ -31,6 +31,8 @@ namespace GocDeployManager.UI.Principal
 
         private bool _seleccionandoNav;
         private bool _progresoSubiendo = true;
+        private int _totalEtapas;
+        private int _etapaActual;
 
         // Colores fijos para el log — independientes del tema
         private static readonly Brush BrushExito      = new SolidColorBrush(Color.FromRgb(0x2E, 0x7D, 0x32));
@@ -214,6 +216,10 @@ namespace GocDeployManager.UI.Principal
 
         private async Task EjecutarDespliegueAsync(SolicitudDespliegue solicitud)
         {
+            // N sistemas × 4 etapas (Validacion, Clonado, Compilacion, Despliegue) + 1 Finalizacion
+            _totalEtapas = solicitud.Sistemas.Count * 4 + 1;
+            _etapaActual = 0;
+
             ConmutarControlesDurante(activo: true);
             _logItems.Clear();
             lblOverlay.Text = "Desplegando...";
@@ -247,6 +253,11 @@ namespace GocDeployManager.UI.Principal
         {
             if (mensaje.Etapa.HasValue)
             {
+                _etapaActual++;
+                var pct = (int)(_etapaActual * 100.0 / _totalEtapas);
+                barraProgresoStatus.Value  = pct;
+                lblPorcentajeStatus.Text   = $"{pct}%";
+
                 var bg = mensaje.Nivel == NivelMensajeSalida.Success ? BrushExito
                        : mensaje.Nivel == NivelMensajeSalida.Error   ? BrushPeligro
                        : (Brush)FindResource("PrimaryHueMidBrush");
@@ -316,6 +327,14 @@ namespace GocDeployManager.UI.Principal
             foreach (var chk in _checkboxesSistema)
                 chk.IsEnabled = !activo;
             overlayGrid.Visibility = activo ? Visibility.Visible : Visibility.Collapsed;
+
+            barraProgresoStatus.Visibility = activo ? Visibility.Visible : Visibility.Collapsed;
+            lblPorcentajeStatus.Visibility = activo ? Visibility.Visible : Visibility.Collapsed;
+            if (!activo)
+            {
+                barraProgresoStatus.Value = 0;
+                lblPorcentajeStatus.Text  = string.Empty;
+            }
         }
 
         private void MostrarError(string mensaje)

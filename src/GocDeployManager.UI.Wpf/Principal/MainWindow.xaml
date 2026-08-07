@@ -253,6 +253,20 @@
                     </ListView>
                 </Border>
 
+                <!-- Overlay de carga — cubre solo los controles de entrada (rows 0-3), no el log -->
+                <Grid Grid.Row="0" Grid.RowSpan="4" x:Name="overlayGrid"
+                      Visibility="Collapsed" Panel.ZIndex="100">
+                    <Border Background="#B0000000">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ProgressBar IsIndeterminate="True"
+                                         Width="240" Height="4" Margin="0,0,0,20"/>
+                            <TextBlock x:Name="lblOverlay" Text="Desplegando..."
+                                       Foreground="White" FontSize="15"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
                 <!-- StatusBar -->
                 <StatusBar Grid.Row="5"
                            Background="{DynamicResource MaterialDesignCardBackground}"
@@ -269,9 +283,23 @@
                         </ItemsPanelTemplate>
                     </StatusBar.ItemsPanel>
                     <StatusBarItem Grid.Column="0" Padding="10,0">
-                        <TextBlock x:Name="lblStatusIzquierda" Text="Listo."
-                                   FontSize="11"
-                                   Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="lblStatusIzquierda" Text="Listo."
+                                       FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                            <ProgressBar x:Name="barraProgresoStatus"
+                                         Width="140" Height="5"
+                                         Minimum="0" Maximum="100" Value="0"
+                                         Margin="12,0,6,0"
+                                         VerticalAlignment="Center"
+                                         Visibility="Collapsed"/>
+                            <TextBlock x:Name="lblPorcentajeStatus"
+                                       FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                       Visibility="Collapsed"/>
+                        </StackPanel>
                     </StatusBarItem>
                     <StatusBarItem Grid.Column="1" Padding="10,0">
                         <TextBlock x:Name="lblStatusDerecha" FontSize="11"
@@ -280,19 +308,6 @@
                 </StatusBar>
             </Grid>
 
-            <!-- Overlay de carga — cubre el área central durante el despliegue -->
-            <Grid Grid.Column="1" x:Name="overlayGrid"
-                  Visibility="Collapsed" Panel.ZIndex="100">
-                <Border Background="#B0000000">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <ProgressBar IsIndeterminate="True"
-                                     Width="240" Height="4" Margin="0,0,0,20"/>
-                        <TextBlock x:Name="lblOverlay" Text="Desplegando..."
-                                   Foreground="White" FontSize="15"
-                                   HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
         </Grid>
 
         <!-- Snackbar para notificaciones de resultado -->

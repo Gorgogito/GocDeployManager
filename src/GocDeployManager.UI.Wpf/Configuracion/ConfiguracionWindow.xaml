@@ -147,13 +147,13 @@
                             Padding="12,8">
                         <DockPanel LastChildFill="True">
                             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                <Button Content="NUEVO" Width="88" Margin="0,0,8,0"
+                                <Button Content="NUEVO" Margin="0,0,8,0"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         Click="BtnNuevoAmbiente_Click"/>
-                                <Button Content="GUARDAR" Width="88" Margin="0,0,8,0"
+                                <Button Content="GUARDAR" Margin="0,0,8,0"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                         Click="BtnGuardarAmbiente_Click"/>
-                                <Button Content="ELIMINAR" Width="88"
+                                <Button Content="ELIMINAR"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
                                         BorderBrush="{DynamicResource MaterialDesignValidationErrorBrush}"
@@ -291,13 +291,13 @@
                             Padding="12,8">
                         <DockPanel LastChildFill="True">
                             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-                                <Button Content="NUEVO" Width="88" Margin="0,0,8,0"
+                                <Button Content="NUEVO" Margin="0,0,8,0"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         Click="BtnNuevoSistema_Click"/>
-                                <Button Content="GUARDAR" Width="88" Margin="0,0,8,0"
+                                <Button Content="GUARDAR" Margin="0,0,8,0"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                         Click="BtnGuardarSistema_Click"/>
-                                <Button Content="ELIMINAR" Width="88"
+                                <Button Content="ELIMINAR"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
                                         BorderBrush="{DynamicResource MaterialDesignValidationErrorBrush}"
