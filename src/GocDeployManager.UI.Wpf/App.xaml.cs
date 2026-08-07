@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using GocDeployManager.Domain.Abstractions;
 using GocDeployManager.UI.Login;
+using GocDeployManager.UI.Temas;
 
 namespace GocDeployManager.UI
 {
@@ -39,6 +40,7 @@ namespace GocDeployManager.UI
                 return;
             }
 
+            TemaManager.Cargar();
             new LoginWindow(bootstrapper).Show();
         }
 
