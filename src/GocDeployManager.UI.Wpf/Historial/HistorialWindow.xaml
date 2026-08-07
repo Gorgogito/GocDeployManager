@@ -5,24 +5,28 @@
         xmlns:ventanas="clr-namespace:GocDeployManager.UI.Ventanas"
         Title="GocDeployManager — Historial de despliegues"
         Width="1040" Height="600"
+        MinWidth="860" MinHeight="480"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{materialDesign:MaterialDesignFont}">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="36" CornerRadius="0"
-                      GlassFrameThickness="0" ResizeBorderThickness="0"/>
+                      GlassFrameThickness="0" ResizeBorderThickness="4"/>
     </WindowChrome.WindowChrome>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>  <!-- Filtros -->
+            <RowDefinition Height="Auto"/>  <!-- Acciones -->
+            <RowDefinition Height="*"/>     <!-- Grilla -->
         </Grid.RowDefinitions>
 
+        <!-- ══════════════ BARRA DE TÍTULO ══════════════ -->
         <Grid Grid.Row="0"
               Background="{DynamicResource PrimaryHueMidBrush}"
               MouseDown="TitleBar_MouseDown">
@@ -30,21 +34,197 @@
                        VerticalAlignment="Center" Margin="14,0"
                        Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
                        FontSize="13"/>
-            <Button HorizontalAlignment="Right"
-                    Style="{StaticResource MaterialDesignFlatMidBgButton}"
-                    WindowChrome.IsHitTestVisibleInChrome="True"
-                    Click="CloseButton_Click"
-                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
-                    Width="46" Height="36" Padding="0">
-                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
-            </Button>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                        Click="MinimizeButton_Click"
+                        Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                        Width="46" Height="36" Padding="0">
+                    <materialDesign:PackIcon Kind="WindowMinimize" Width="16" Height="16"/>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                        Click="MaximizeButton_Click"
+                        Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                        Width="46" Height="36" Padding="0">
+                    <materialDesign:PackIcon Kind="WindowMaximize" Width="16" Height="16"/>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                        Click="CloseButton_Click"
+                        Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                        Width="46" Height="36" Padding="0">
+                    <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+                </Button>
+            </StackPanel>
         </Grid>
 
-        <!-- Contenido — implementado en Fase 5 -->
-        <TextBlock Grid.Row="1"
-                   Text="HistorialWindow — Fase 5"
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                   Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                   Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+        <!-- ══════════════ FILTROS ══════════════ -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource MaterialDesignCardBackground}"
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8,12,8">
+            <StackPanel>
+                <!-- Fila superior: filtros de texto + botones -->
+                <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="GOC" VerticalAlignment="Center" Margin="0,0,5,0"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}" FontSize="12"/>
+                    <TextBox x:Name="txtGoc" Width="110" Margin="0,0,14,0"
+                             materialDesign:HintAssist.Hint="GOC-00000"
+                             Style="{StaticResource MaterialDesignTextBox}"
+                             VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Ambiente" VerticalAlignment="Center" Margin="0,0,5,0"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}" FontSize="12"/>
+                    <ComboBox x:Name="comboAmbiente" Width="140" Margin="0,0,14,0"
+                              VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Sistema" VerticalAlignment="Center" Margin="0,0,5,0"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}" FontSize="12"/>
+                    <ComboBox x:Name="comboSistema" Width="100" Margin="0,0,14,0"
+                              VerticalAlignment="Center"/>
+
+                    <TextBlock Text="Resultado" VerticalAlignment="Center" Margin="0,0,5,0"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}" FontSize="12"/>
+                    <ComboBox x:Name="comboResultado" Width="130" Margin="0,0,14,0"
+                              VerticalAlignment="Center"/>
+
+                    <Button Content="BUSCAR" Margin="0,0,8,0"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            VerticalAlignment="Center"
+                            Click="BtnBuscar_Click"/>
+                    <Button Content="LIMPIAR"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            VerticalAlignment="Center"
+                            Click="BtnLimpiar_Click"/>
+                </WrapPanel>
+
+                <!-- Fila inferior: fechas -->
+                <WrapPanel Orientation="Horizontal">
+                    <CheckBox x:Name="chkDesde" Content="Desde"
+                              VerticalAlignment="Center" Margin="0,0,6,0"
+                              Foreground="{DynamicResource MaterialDesignBodyLight}"
+                              FontSize="12"/>
+                    <DatePicker x:Name="dpDesde" Width="128" Margin="0,0,16,0"
+                                VerticalAlignment="Center"
+                                IsEnabled="{Binding IsChecked, ElementName=chkDesde}"/>
+
+                    <CheckBox x:Name="chkHasta" Content="Hasta"
+                              VerticalAlignment="Center" Margin="0,0,6,0"
+                              Foreground="{DynamicResource MaterialDesignBodyLight}"
+                              FontSize="12"/>
+                    <DatePicker x:Name="dpHasta" Width="128"
+                                VerticalAlignment="Center"
+                                IsEnabled="{Binding IsChecked, ElementName=chkHasta}"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ══════════════ BARRA DE ACCIONES ══════════════ -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource MaterialDesignCardBackground}"
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                BorderThickness="0,0,0,1"
+                Padding="12,6">
+            <DockPanel>
+                <TextBlock x:Name="lblEstado"
+                           DockPanel.Dock="Right"
+                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Margin="16,0,0,0"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="VER DETALLE"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Margin="0,0,8,0"
+                            Click="BtnVerDetalle_Click">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="OpenInNew" Width="14" Height="14"
+                                                             VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="VER DETALLE" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                    <Button Content="EXPORTAR EXCEL"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Margin="0,0,8,0"
+                            Click="BtnExportarExcel_Click">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FileExcel" Width="14" Height="14"
+                                                             VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="EXPORTAR EXCEL" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                    <Button Content="EXPORTAR PDF"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Click="BtnExportarPdf_Click">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FilePdfBox" Width="14" Height="14"
+                                                             VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="EXPORTAR PDF" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════ GRILLA DE RESULTADOS ══════════════ -->
+        <DataGrid Grid.Row="3" x:Name="gridHistorial"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserResizeRows="False"
+                  CanUserSortColumns="True"
+                  SelectionMode="Single"
+                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                  BorderThickness="0"
+                  materialDesign:DataGridAssist.ColumnHeaderPadding="10,6,10,6"
+                  MouseDoubleClick="GridHistorial_MouseDoubleClick">
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Fecha y hora"
+                    Binding="{Binding Fecha}" Width="145"/>
+                <DataGridTextColumn Header="GOC"
+                    Binding="{Binding Goc}" Width="90"/>
+                <DataGridTextColumn Header="Ambiente"
+                    Binding="{Binding Ambiente}" Width="110"/>
+                <DataGridTextColumn Header="Sistemas"
+                    Binding="{Binding Sistemas}" Width="120"/>
+
+                <!-- Resultado con color semántico -->
+                <DataGridTextColumn Header="Resultado"
+                    Binding="{Binding Resultado}" Width="85">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{Binding CorResultado}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Usuario"
+                    Binding="{Binding Usuario}" Width="*"/>
+                <DataGridTextColumn Header="Compilación"
+                    Binding="{Binding Compilacion}" Width="80"/>
+                <DataGridTextColumn Header="Despliegue"
+                    Binding="{Binding TiempoDespliegue}" Width="80"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Snackbar -->
+        <materialDesign:Snackbar Grid.Row="3" x:Name="snackbar"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Bottom"
+                                  Panel.ZIndex="200"/>
     </Grid>
 </ventanas:VentanaBase>

@@ -1,0 +1,173 @@
+<ventanas:VentanaBase x:Class="GocDeployManager.UI.Historial.DetalleDespliegueDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:ventanas="clr-namespace:GocDeployManager.UI.Ventanas"
+        Title="GocDeployManager — Detalle del despliegue"
+        Width="580" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="36" CornerRadius="0"
+                      GlassFrameThickness="0" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="52"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de título -->
+        <Grid Grid.Row="0"
+              Background="{DynamicResource PrimaryHueMidBrush}"
+              MouseDown="TitleBar_MouseDown">
+            <TextBlock x:Name="lblTituloVentana"
+                       VerticalAlignment="Center" Margin="14,0"
+                       Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                       FontSize="13"/>
+            <Button HorizontalAlignment="Right"
+                    Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="CloseButton_Click"
+                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                    Width="46" Height="36" Padding="0">
+                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+            </Button>
+        </Grid>
+
+        <!-- Contenido -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="20,16,20,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Fila 0: FechaHora | Resultado -->
+                <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,10,14">
+                    <TextBlock Text="FECHA Y HORA"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblFechaHora" FontSize="13"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Grid.Row="0" Margin="10,0,0,14">
+                    <TextBlock Text="RESULTADO"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblResultado" FontSize="13" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <!-- Fila 1: GOC | Rama -->
+                <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,14">
+                    <TextBlock Text="GOC"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblGoc" FontSize="13"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,14">
+                    <TextBlock Text="RAMA"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblRama" FontSize="13" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Fila 2: Ambiente | Sistemas -->
+                <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,10,14">
+                    <TextBlock Text="AMBIENTE"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblAmbiente" FontSize="13"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Grid.Row="2" Margin="10,0,0,14">
+                    <TextBlock Text="SISTEMAS"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblSistemas" FontSize="13" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Fila 3: Usuario aplicación | Usuario Windows -->
+                <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,0,10,14">
+                    <TextBlock Text="USUARIO APLICACIÓN"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblUsuarioApp" FontSize="13"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Grid.Row="3" Margin="10,0,0,14">
+                    <TextBlock Text="USUARIO WINDOWS"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblUsuarioWindows" FontSize="13"/>
+                </StackPanel>
+
+                <!-- Fila 4: Equipo | — -->
+                <StackPanel Grid.Column="0" Grid.Row="4" Margin="0,0,10,14">
+                    <TextBlock Text="EQUIPO"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblEquipo" FontSize="13"/>
+                </StackPanel>
+
+                <!-- Fila 5: Compilación | Despliegue -->
+                <StackPanel Grid.Column="0" Grid.Row="5" Margin="0,0,10,14">
+                    <TextBlock Text="TIEMPO DE COMPILACIÓN"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblTiempoCompilacion" FontSize="13"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Grid.Row="5" Margin="10,0,0,14">
+                    <TextBlock Text="TIEMPO DE DESPLIEGUE"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblTiempoDespliegue" FontSize="13"/>
+                </StackPanel>
+
+                <!-- Fila 6: Errores (ancho completo) -->
+                <StackPanel Grid.ColumnSpan="2" Grid.Row="6" Margin="0,0,0,14">
+                    <TextBlock Text="ERRORES"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblErrores" FontSize="13" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Fila 7: Observaciones (ancho completo) -->
+                <StackPanel Grid.ColumnSpan="2" Grid.Row="7" Margin="0,0,0,4">
+                    <TextBlock Text="OBSERVACIONES"
+                               Style="{StaticResource MaterialDesignOverlineTextBlock}"
+                               Margin="0,0,0,2"/>
+                    <TextBlock x:Name="lblObservaciones" FontSize="13" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Barra inferior -->
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                BorderThickness="0,1,0,0"
+                Padding="20,9">
+            <Button Content="CERRAR"
+                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                    Width="100"
+                    HorizontalAlignment="Left"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Click="CloseButton_Click"/>
+        </Border>
+    </Grid>
+</ventanas:VentanaBase>
