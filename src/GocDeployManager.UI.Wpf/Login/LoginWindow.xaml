@@ -1,0 +1,97 @@
+<ventanas:VentanaBase x:Class="GocDeployManager.UI.Login.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:ventanas="clr-namespace:GocDeployManager.UI.Ventanas"
+        Title="GocDeployManager — Iniciar sesión"
+        Width="400" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="36" CornerRadius="0" GlassFrameThickness="0" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de título personalizada -->
+        <Grid Grid.Row="0"
+              Background="{DynamicResource PrimaryHueMidBrush}"
+              MouseDown="TitleBar_MouseDown">
+            <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=Title}"
+                       VerticalAlignment="Center" Margin="14 0"
+                       Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                       FontSize="13" FontFamily="{materialDesign:MaterialDesignFont}"/>
+            <Button HorizontalAlignment="Right"
+                    Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                    WindowChrome.IsHitTestVisibleInChrome="True"
+                    Click="CloseButton_Click"
+                    Foreground="{DynamicResource PrimaryHueMidForegroundBrush}"
+                    Width="46" Height="36" Padding="0">
+                <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
+            </Button>
+        </Grid>
+
+        <!-- Formulario centrado -->
+        <StackPanel Grid.Row="1" Margin="28,24,28,28">
+
+            <TextBlock x:Name="lblTitulo"
+                       Text="Iniciar sesión"
+                       Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                       Margin="0,0,0,24"/>
+
+            <!-- Usuario -->
+            <TextBox x:Name="txtUsuario"
+                     materialDesign:HintAssist.Hint="Usuario"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Margin="0,0,0,16"/>
+
+            <!-- Nombre visible — solo modo primer arranque -->
+            <StackPanel x:Name="panelNombreVisible" Visibility="Collapsed">
+                <TextBox x:Name="txtNombreVisible"
+                         materialDesign:HintAssist.Hint="Nombre visible"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Margin="0,0,0,16"/>
+            </StackPanel>
+
+            <!-- Contraseña -->
+            <PasswordBox x:Name="txtContrasena"
+                         materialDesign:HintAssist.Hint="Contraseña"
+                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                         Margin="0,0,0,16"/>
+
+            <!-- Confirmar contraseña — solo modo primer arranque -->
+            <StackPanel x:Name="panelConfirmarContrasena" Visibility="Collapsed">
+                <PasswordBox x:Name="txtConfirmarContrasena"
+                             materialDesign:HintAssist.Hint="Confirmar contraseña"
+                             Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                             Margin="0,0,0,16"/>
+            </StackPanel>
+
+            <!-- Mensaje de error -->
+            <TextBlock x:Name="lblError"
+                       Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                       TextWrapping="Wrap"
+                       Visibility="Collapsed"
+                       Margin="0,0,0,12"
+                       FontSize="12"/>
+
+            <!-- Acción principal -->
+            <Button x:Name="btnAccion"
+                    Content="INGRESAR"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    IsDefault="True"
+                    Height="40"
+                    Click="BtnAccion_Click"/>
+
+        </StackPanel>
+    </Grid>
+</ventanas:VentanaBase>
