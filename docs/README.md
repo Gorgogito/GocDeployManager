@@ -6,4 +6,4 @@
 Ambos son archivos HTML autocontenidos (sin dependencias externas): se pueden abrir directamente con doble clic en cualquier navegador, sin necesidad de servidor.
 
 # Programa
-- Para utilizar solamente el programa, obtener la carpeta 'version', el archivo GocDeployManager.UI.exe es el archivo ejecutable del sistema, en el archivo GocDeployManager.UI.exe.config están las configuraciones incluyendo la conexión a la base de datos.
+- Para utilizar solamente el programa, obtener la carpeta 'version', el archivo GocDeployManager.exe es el archivo ejecutable del sistema, en el archivo GocDeployManager.exe.config están las configuraciones incluyendo la conexión a la base de datos.
