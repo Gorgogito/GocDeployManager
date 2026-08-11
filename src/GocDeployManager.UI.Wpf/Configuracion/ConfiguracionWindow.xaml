@@ -4,8 +4,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:ventanas="clr-namespace:GocDeployManager.UI.Ventanas"
         Title="GocDeployManager — Configuración"
-        Width="820" Height="540"
-        WindowStartupLocation="CenterOwner"
+        Width="1200" Height="600"
+        WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="NoResize"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -50,7 +50,7 @@
             <TabItem Header="Ambientes" x:Name="tabAmbientes">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="350"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -175,7 +175,7 @@
             <TabItem Header="Bitbucket" x:Name="tabBitbucket">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="450"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -197,7 +197,7 @@
                                   BorderThickness="0"
                                   materialDesign:DataGridAssist.ColumnHeaderPadding="8,6,8,6">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Sistema" Binding="{Binding Codigo}" Width="70"/>
+                                <DataGridTextColumn Header="Sistema" Binding="{Binding Codigo}" Width="150"/>
                                 <DataGridTextColumn Header="Repositorio" Binding="{Binding RepositorioCorto}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -319,7 +319,7 @@
             <TabItem Header="Usuarios" x:Name="tabUsuarios">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="380"/>
+                        <ColumnDefinition Width="600"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -342,10 +342,10 @@
                                   materialDesign:DataGridAssist.ColumnHeaderPadding="8,6,8,6">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="90"/>
-                                <DataGridTextColumn Header="Nombre visible" Binding="{Binding NombreVisible}" Width="*"/>
-                                <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="80"/>
-                                <DataGridTextColumn Header="Activo" Binding="{Binding Activo}" Width="50"/>
-                                <DataGridTextColumn Header="Bitbucket" Binding="{Binding Bitbucket}" Width="75"/>
+                                <DataGridTextColumn Header="Nombre visible" Binding="{Binding NombreVisible}" Width="150"/>
+                                <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="125"/>
+                                <DataGridTextColumn Header="Activo" Binding="{Binding Activo}" Width="75"/>
+                                <DataGridTextColumn Header="Bitbucket" Binding="{Binding Bitbucket}" Width="125"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Border>
@@ -405,7 +405,7 @@
                                 <Button Content="CONFIGURAR CREDENCIALES BITBUCKET"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         HorizontalAlignment="Left"
-                                        Width="270"
+                                        Width="300"
                                         Margin="0,0,0,12"
                                         Click="BtnConfigurarBitbucket_Click"/>
 
@@ -443,7 +443,7 @@
             <!-- ══ TAB 4: GENERAL ══ -->
             <TabItem Header="General" x:Name="tabGeneral">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="24,16,24,20" MaxWidth="620">
+                    <StackPanel Margin="24,16,24,20" MaxWidth="900">
 
                         <TextBlock Text="RUTAS DE LA APLICACIÓN"
                                    Style="{StaticResource MaterialDesignOverlineTextBlock}"

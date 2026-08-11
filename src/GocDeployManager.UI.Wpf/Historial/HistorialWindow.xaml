@@ -6,7 +6,7 @@
         Title="GocDeployManager — Historial de despliegues"
         Width="1040" Height="600"
         MinWidth="860" MinHeight="480"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="CanResize"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"

@@ -8,6 +8,12 @@ namespace GocDeployManager.UI.Ventanas
 {
     public class VentanaBase : Window
     {
+        public VentanaBase()
+        {
+            BorderThickness = new Thickness(1);
+            SetResourceReference(BorderBrushProperty, "PrimaryHueMidBrush");
+        }
+
         // ─── Maximizar respetando la barra de tareas ──────────────────────
 
         protected override void OnSourceInitialized(EventArgs e)

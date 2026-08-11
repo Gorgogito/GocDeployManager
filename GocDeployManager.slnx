@@ -1,12 +1,11 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/DesktopComponents/DesktopComponents.csproj" />
     <Project Path="src/GocDeployManager.Application/GocDeployManager.Application.csproj" />
     <Project Path="src/GocDeployManager.Common/GocDeployManager.Common.csproj" />
     <Project Path="src/GocDeployManager.Domain/GocDeployManager.Domain.csproj" />
     <Project Path="src/GocDeployManager.Infrastructure/GocDeployManager.Infrastructure.csproj" />
     <Project Path="src/GocDeployManager.Services/GocDeployManager.Services.csproj" />
-    <Project Path="src/GocDeployManager.UI/GocDeployManager.UI.csproj" />
+    <Project Path="src/GocDeployManager.UI.Wpf/GocDeployManager.UI.Wpf.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GocDeployManager.Application.Tests/GocDeployManager.Application.Tests.csproj" />
