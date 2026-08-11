@@ -8,10 +8,15 @@
     <Nullable>disable</Nullable>
     <RootNamespace>GocDeployManager.UI</RootNamespace>
     <AssemblyName>GocDeployManager</AssemblyName>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="System.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico"/>
   </ItemGroup>
 
   <ItemGroup>

@@ -8,6 +8,7 @@
         MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
+        Icon="pack://application:,,,/app.ico"
         ResizeMode="CanResize"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
@@ -15,7 +16,7 @@
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="36" CornerRadius="0"
-                      GlassFrameThickness="0" ResizeBorderThickness="4"/>
+                      GlassFrameThickness="0" ResizeBorderThickness="6"/>
     </WindowChrome.WindowChrome>
 
     <Grid>

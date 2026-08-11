@@ -7,6 +7,7 @@
         Width="400" SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
+        Icon="pack://application:,,,/app.ico"
         ResizeMode="NoResize"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
@@ -52,21 +53,41 @@
             <TextBox x:Name="txtUsuario"
                      materialDesign:HintAssist.Hint="Usuario"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,0,0,16"/>
+                     Margin="0,0,0,16"
+                     KeyDown="TxtUsuario_KeyDown"/>
 
             <!-- Nombre visible — solo modo primer arranque -->
             <StackPanel x:Name="panelNombreVisible" Visibility="Collapsed">
                 <TextBox x:Name="txtNombreVisible"
                          materialDesign:HintAssist.Hint="Nombre visible"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Margin="0,0,0,16"/>
+                         Margin="0,0,0,16"
+                         KeyDown="TxtNombreVisible_KeyDown"/>
             </StackPanel>
 
-            <!-- Contraseña -->
-            <PasswordBox x:Name="txtContrasena"
-                         materialDesign:HintAssist.Hint="Contraseña"
-                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                         Margin="0,0,0,16"/>
+            <!-- Contraseña con toggle mostrar/ocultar -->
+            <DockPanel Margin="0,0,0,16">
+                <Button x:Name="btnMostrarContrasena"
+                        DockPanel.Dock="Right"
+                        Style="{StaticResource MaterialDesignIconButton}"
+                        VerticalAlignment="Center"
+                        Width="32" Height="32" Padding="0"
+                        Foreground="{DynamicResource MaterialDesignBodyLight}"
+                        Click="BtnMostrarContrasena_Click"
+                        ToolTip="Mostrar contraseña">
+                    <materialDesign:PackIcon x:Name="iconContrasena" Kind="Eye" Width="18" Height="18"/>
+                </Button>
+                <Grid>
+                    <PasswordBox x:Name="txtContrasena"
+                                 materialDesign:HintAssist.Hint="Contraseña"
+                                 Style="{StaticResource MaterialDesignOutlinedPasswordBox}"/>
+                    <TextBox x:Name="txtContrasenaVisible"
+                             materialDesign:HintAssist.Hint="Contraseña"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Visibility="Collapsed"
+                             KeyDown="TxtContrasenaVisible_KeyDown"/>
+                </Grid>
+            </DockPanel>
 
             <!-- Confirmar contraseña — solo modo primer arranque -->
             <StackPanel x:Name="panelConfirmarContrasena" Visibility="Collapsed">
