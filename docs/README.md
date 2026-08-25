@@ -7,3 +7,6 @@ Ambos son archivos HTML autocontenidos (sin dependencias externas): se pueden ab
 
 # Programa
 - Para utilizar solamente el programa, obtener la carpeta 'version', el archivo GocDeployManager.exe es el archivo ejecutable del sistema, en el archivo GocDeployManager.exe.config están las configuraciones incluyendo la conexión a la base de datos.
+
+# Versión para TEST 
+- Para utilizar solamente el programa para TEST, obtener la carpeta 'GocDeployManager Test', el archivo GocDeployManager.exe es el archivo ejecutable del sistema, en el archivo GocDeployManager.exe.config están las configuraciones incluyendo la conexión a la base de datos para TEST.
