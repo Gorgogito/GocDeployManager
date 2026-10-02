@@ -57,7 +57,7 @@ namespace GocDeployManager.Application.Tests
         }
 
         private SolicitudDespliegue CrearSolicitud() => new SolicitudDespliegue(
-            Goc.Crear("GOC-00001").Value, _ambienteDesarrollo, new[] { _sit },
+            ReferenciaDespliegue.DesdeGoc(Goc.Crear("GOC-00001").Value), _ambienteDesarrollo, new[] { _sit },
             "jtorres", "jtorres.win", "LAPTOP-01", "jtorres.bb", "clave-bb", @"C:\Clonado");
 
         [Test]
@@ -190,7 +190,7 @@ namespace GocDeployManager.Application.Tests
 
             var ambiente = new Ambiente("Desarrollo", new[] { new AmbienteSistema(sistemaConComillas, @"\\Sdpeapp00009\Aplicaciones\SIT") });
             var solicitud = new SolicitudDespliegue(
-                Goc.Crear("GOC-00003").Value, ambiente, new[] { sistemaConComillas },
+                ReferenciaDespliegue.DesdeGoc(Goc.Crear("GOC-00003").Value), ambiente, new[] { sistemaConComillas },
                 "jtorres", "jtorres.win", "LAPTOP-01", "jtorres.bb", "clave-bb", @"C:\Clonado");
 
             var resultado = _orquestador.EjecutarDespliegue(solicitud);
@@ -234,7 +234,7 @@ namespace GocDeployManager.Application.Tests
                     new SecuenciaDeBuild(otroSistema, new[] { new PasoDeBuild(1, "IDI.BussinessEntities") }))));
 
             var solicitud = new SolicitudDespliegue(
-                Goc.Crear("GOC-00002").Value, _ambienteDesarrollo, new[] { otroSistema },
+                ReferenciaDespliegue.DesdeGoc(Goc.Crear("GOC-00002").Value), _ambienteDesarrollo, new[] { otroSistema },
                 "jtorres", "jtorres.win", "LAPTOP-01", "jtorres.bb", "clave-bb", @"C:\Clonado");
 
             var resultado = _orquestador.EjecutarDespliegue(solicitud);

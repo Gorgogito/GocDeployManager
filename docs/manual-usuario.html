@@ -151,6 +151,7 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
       <li><a href="#s5-2" class="sub">5.2 Bitbucket</a></li>
       <li><a href="#s5-3" class="sub">5.3 Usuarios</a></li>
       <li><a href="#s5-4" class="sub">5.4 General</a></li>
+      <li><a href="#s5-5" class="sub">5.5 Ramas</a></li>
       <li id="nav-s6"><a href="#s6">6. Historial</a></li>
       <li id="nav-s7"><a href="#s7">7. Preguntas frecuentes</a></li>
     </ul>
@@ -301,7 +302,8 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
           <tr><td>&#9881;&#65039; <strong>Configuración</strong></td><td>Abre la ventana de configuración del sistema (solo administradores).</td></tr>
           <tr><td>&#128203; <strong>Historial</strong></td><td>Abre el historial de despliegues registrados.</td></tr>
           <tr><td>&#128682; <strong>Cerrar sesión</strong></td><td>Cierra la sesión y vuelve a la pantalla de inicio de sesión.</td></tr>
-          <tr><td><strong>Campo GOC</strong></td><td>Ingresa el código del GOC a desplegar (ej. <code>GOC-19205</code>).</td></tr>
+          <tr><td><strong>Selector «Desplegar»</strong></td><td>Define qué se despliega: un <strong>GOC</strong>, una <strong>Rama estándar</strong> (lista configurada por el administrador) u <strong>Otra rama</strong> (nombre escrito a mano).</td></tr>
+          <tr><td><strong>Campo GOC / Rama</strong></td><td>En modo GOC, ingresa el código (ej. <code>GOC-19205</code>); en modo «Otra rama», el nombre exacto de la rama (ej. <code>release/2.3</code>). En modo «Rama estándar» se reemplaza por una lista desplegable.</td></tr>
           <tr><td><strong>Selector de Ambiente</strong></td><td>Lista desplegable con los ambientes configurados.</td></tr>
           <tr><td><strong>Checkboxes de sistemas</strong></td><td>Selecciona qué sistemas desplegar (SIT, IDI, Provisión Pagos, etc.).</td></tr>
           <tr><td><strong>INICIAR DESPLIEGUE</strong></td><td>Ejecuta el proceso con la configuración elegida.</td></tr>
@@ -316,13 +318,18 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
 <section class="sec" id="s4">
   <div class="sch">
     <div class="sn">4</div>
-    <div class="st"><h2>Realizar un despliegue</h2><p>Proceso paso a paso para desplegar un GOC</p></div>
+    <div class="st"><h2>Realizar un despliegue</h2><p>Proceso paso a paso para desplegar un GOC o una rama</p></div>
   </div>
 
   <p>Un despliegue toma el código de un GOC (rama de Bitbucket), lo compila y lo envía al servidor del ambiente destino. Sigue estos pasos:</p>
 
   <ol class="steps">
-    <li><div><strong>Ingresa el código del GOC</strong><br>Escribe el identificador en el campo principal, ej. <code>GOC-19205</code>. Es la rama de Bitbucket con los cambios a desplegar.</div></li>
+    <li><div><strong>Elige qué desplegar</strong><br>En el selector <em>Desplegar</em> escoge uno de los tres modos:
+      <ul style="padding-left:20px;line-height:1.9;margin-top:6px">
+        <li><strong>GOC</strong> &mdash; escribe el código, ej. <code>GOC-19205</code>. Se despliega la rama <code>feature/GOC-19205</code> de Bitbucket.</li>
+        <li><strong>Rama estándar</strong> &mdash; elige de la lista una rama como <code>master</code> o <code>develop</code> (la lista la mantiene un administrador, ver <a href="#s5-5">5.5 Ramas</a>).</li>
+        <li><strong>Otra rama</strong> &mdash; escribe el nombre exacto de cualquier rama de Bitbucket, ej. <code>release/2.3</code>. No admite espacios ni caracteres como <code>~ ^ : ? * [ \</code>.</li>
+      </ul></div></li>
     <li><div><strong>Selecciona el ambiente</strong><br>Usa el selector desplegable para elegir el ambiente destino (ej. <em>Ambiente JTorres</em>).</div></li>
     <li><div><strong>Elige los sistemas a desplegar</strong><br>Marca uno o varios checkboxes: <em>SIT</em>, <em>IDI</em>, <em>Provisión Pagos</em>, etc.</div></li>
     <li><div><strong>Haz clic en INICIAR DESPLIEGUE</strong><br>El proceso comienza. El panel de estado muestra en tiempo real: clonado, compilación, copia de artefactos.</div></li>
@@ -332,6 +339,10 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
   <div class="call warn">
     <span class="call-i">&#9888;&#65039;</span>
     <div class="call-b"><strong>Durante el despliegue</strong>No cierres la aplicación mientras el proceso está en curso. Hacerlo puede dejar el ambiente en estado inconsistente.</div>
+  </div>
+  <div class="call warn">
+    <span class="call-i">&#9888;&#65039;</span>
+    <div class="call-b"><strong>Ramas distintas de un GOC</strong>Al desplegar <code>master</code>, <code>develop</code> u otra rama no se pide confirmación adicional: revisa bien el ambiente y la rama antes de pulsar INICIAR DESPLIEGUE. En el Historial, la columna GOC muestra el nombre de la rama y la columna Rama la rama real.</div>
   </div>
   <div class="call tip">
     <span class="call-i">&#128161;</span>
@@ -343,7 +354,7 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
 <section class="sec" id="s5">
   <div class="sch">
     <div class="sn">5</div>
-    <div class="st"><h2>Configuración del sistema</h2><p>Ambientes, Bitbucket, usuarios y rutas de la aplicación</p></div>
+    <div class="st"><h2>Configuración del sistema</h2><p>Ambientes, Bitbucket, usuarios, ramas y rutas de la aplicación</p></div>
   </div>
 
   <p>La ventana de <strong>Configuración</strong> centraliza todos los ajustes. Se accede mediante el ícono &#9881;&#65039; en la barra lateral. Solo los usuarios con rol <span class="bdg i">Administrador</span> pueden abrirla.</p>
@@ -445,6 +456,25 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
       <div class="call-b"><strong>Guardar cambios</strong>Después de modificar cualquier campo, haz clic en <strong>GUARDAR CONFIGURACIÓN</strong> para que los cambios tengan efecto.</div>
     </div>
   </div>
+
+  <div class="subsec" id="s5-5">
+    <h3>5.5 Pestaña Ramas</h3>
+    <p>Administra las <strong>ramas estándar</strong> que aparecen en la ventana principal al elegir el modo <em>Rama estándar</em> (por defecto <code>master</code> y <code>develop</code>). La lista es compartida por todos los usuarios.</p>
+    <div class="tw">
+      <table class="dt">
+        <thead><tr><th>Botón</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AGREGAR</strong></td><td>Añade una fila nueva; escribe el nombre exacto de la rama en Bitbucket (ej. <code>release/2.3</code>).</td></tr>
+          <tr><td><strong>ELIMINAR</strong></td><td>Quita de la lista la rama seleccionada.</td></tr>
+          <tr><td><strong>GUARDAR</strong></td><td>Valida los nombres (sin espacios, sin duplicados) y guarda la lista en la base de datos.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="call note">
+      <span class="call-i">&#8505;&#65039;</span>
+      <div class="call-b"><strong>Solo administradores</strong>Esta pestaña forma parte de Configuración y solo está disponible para el rol Administrador. La tabla se crea automáticamente la primera vez; si el usuario de la base de datos no tiene permiso para crear tablas, el DBA debe ejecutar <code>sql/schema-sql-server.sql</code>.</div>
+    </div>
+  </div>
 </section>
 
 <!-- ── SECCIÓN 6 ── -->
@@ -508,7 +538,7 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
     <summary>El despliegue falló &mdash; ¿qué debo revisar?</summary>
     <div class="faq-a">
       <ol style="padding-left:20px;line-height:2.2">
-        <li>Verifica que el código del GOC sea correcto y que la rama exista en Bitbucket.</li>
+        <li>Verifica que el código del GOC (o el nombre de la rama elegida) sea correcto y que la rama exista en Bitbucket.</li>
         <li>Confirma que tus credenciales Bitbucket estén configuradas en <strong>Configuración &#8594; Usuarios &#8594; Configurar credenciales Bitbucket</strong>.</li>
         <li>Revisa los logs en la ruta indicada en <strong>Configuración &#8594; General &#8594; Ruta de logs</strong>.</li>
         <li>Verifica permisos de escritura en la ruta de despliegue del ambiente.</li>
@@ -535,6 +565,11 @@ footer{text-align:center;padding:24px 56px;font-size:12px;color:var(--dim);borde
   <details class="faq">
     <summary>¿Dónde se guardan los datos de la aplicación?</summary>
     <div class="faq-a">Los usuarios e historial se almacenan en la base de datos SQL Server configurada en <strong>Configuración &#8594; General &#8594; Cadena de conexión SQL</strong>. La configuración de ambientes y sistemas se guarda como archivos JSON en la <strong>Ruta de configuración</strong>.</div>
+  </details>
+
+  <details class="faq">
+    <summary>¿Puedo desplegar <code>master</code>, <code>develop</code> u otra rama que no sea un GOC?</summary>
+    <div class="faq-a">Sí. En la ventana principal cambia el selector <strong>Desplegar</strong> a <em>Rama estándar</em> (lista configurada por el administrador en <strong>Configuración &#8594; Ramas</strong>) o a <em>Otra rama</em> para escribir el nombre exacto de la rama.</div>
   </details>
 
   <details class="faq">

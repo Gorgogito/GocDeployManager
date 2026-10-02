@@ -54,7 +54,7 @@ namespace GocDeployManager.Application.Deploy
             var cronometroCompilacion = new Stopwatch();
             var cronometroDespliegue = new Stopwatch();
 
-            _logger.Info($"Despliegue iniciado: GOC={solicitud.Goc.Numero} rama={solicitud.Goc.RamaBitbucket} ambiente={solicitud.Ambiente.Nombre} sistemas={string.Join(",", solicitud.Sistemas.Select(s => s.Codigo))} usuario={solicitud.UsuarioAplicacion}");
+            _logger.Info($"Despliegue iniciado: referencia={solicitud.Referencia.Etiqueta} rama={solicitud.Referencia.Rama} ambiente={solicitud.Ambiente.Nombre} sistemas={string.Join(",", solicitud.Sistemas.Select(s => s.Codigo))} usuario={solicitud.UsuarioAplicacion}");
 
             foreach (var sistema in solicitud.Sistemas)
             {
@@ -83,7 +83,7 @@ namespace GocDeployManager.Application.Deploy
                 string rutaTrabajo;
                 try
                 {
-                    rutaTrabajo = Path.Combine(solicitud.RutaClonadoBase, sistema.Codigo, solicitud.Goc.Numero);
+                    rutaTrabajo = Path.Combine(solicitud.RutaClonadoBase, sistema.Codigo, solicitud.Referencia.CarpetaTrabajo);
                 }
                 catch (ArgumentException ex)
                 {
@@ -96,11 +96,11 @@ namespace GocDeployManager.Application.Deploy
                 Reportar(progreso, Entidades.NivelMensajeSalida.Success, $"[{sistema.Nombre}] Configuración válida.");
 
                 ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Clonado, $"CLONADO — {sistema.Nombre}");
-                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Rama: {solicitud.Goc.RamaBitbucket}");
+                Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Rama: {solicitud.Referencia.Rama}");
                 Reportar(progreso, Entidades.NivelMensajeSalida.Info, $"[{sistema.Nombre}] Clonando/actualizando repositorio...", esResumen: true);
 
                 var clonado = _git.ClonarORama(
-                    configuracion.RepositorioUrl, solicitud.Goc.RamaBitbucket, rutaTrabajo,
+                    configuracion.RepositorioUrl, solicitud.Referencia.Rama, rutaTrabajo,
                     solicitud.UsuarioBitbucket, solicitud.ContrasenaBitbucket,
                     linea => ReportarSalidaDeProceso(progreso, linea));
 
@@ -181,17 +181,17 @@ namespace GocDeployManager.Application.Deploy
 
             ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Finalizacion, "FINALIZACIÓN");
             Reportar(progreso, Entidades.NivelMensajeSalida.Success,
-                $"Despliegue finalizado correctamente. GOC: {solicitud.Goc.Numero} · Ambiente: {solicitud.Ambiente.Nombre} · " +
+                $"Despliegue finalizado correctamente. Rama: {solicitud.Referencia.Rama} · Ambiente: {solicitud.Ambiente.Nombre} · " +
                 $"Sistemas: {string.Join(", ", solicitud.Sistemas.Select(s => s.Codigo))} · Duración: {cronometroTotal.Elapsed:hh\\:mm\\:ss}.",
                 esResumen: true);
 
             var despliegueExitoso = Entidades.Despliegue.RegistrarExitoso(
                 solicitud.UsuarioAplicacion, solicitud.UsuarioWindows, solicitud.Equipo,
-                solicitud.Goc.Numero, solicitud.Goc.RamaBitbucket, solicitud.Ambiente.Nombre,
+                solicitud.Referencia.Etiqueta, solicitud.Referencia.Rama, solicitud.Ambiente.Nombre,
                 solicitud.Sistemas.Select(s => s.Codigo), cronometroCompilacion.Elapsed, cronometroDespliegue.Elapsed);
 
             _historial.Registrar(despliegueExitoso);
-            _logger.Info($"Despliegue exitoso: GOC={solicitud.Goc.Numero} (compilación {cronometroCompilacion.Elapsed:hh\\:mm\\:ss}, despliegue {cronometroDespliegue.Elapsed:hh\\:mm\\:ss}).");
+            _logger.Info($"Despliegue exitoso: referencia={solicitud.Referencia.Etiqueta} (compilación {cronometroCompilacion.Elapsed:hh\\:mm\\:ss}, despliegue {cronometroDespliegue.Elapsed:hh\\:mm\\:ss}).");
             return Result.Ok();
         }
 
@@ -201,16 +201,16 @@ namespace GocDeployManager.Application.Deploy
         {
             ReportarInicioEtapa(progreso, Entidades.EtapaProgreso.Finalizacion, "FINALIZACIÓN");
             Reportar(progreso, Entidades.NivelMensajeSalida.Error,
-                $"Despliegue finalizado con errores. GOC: {solicitud.Goc.Numero} · Etapa: {etapaTexto} · Error: {PrimeraLinea(error)}",
+                $"Despliegue finalizado con errores. Rama: {solicitud.Referencia.Rama} · Etapa: {etapaTexto} · Error: {PrimeraLinea(error)}",
                 esResumen: true);
 
             var despliegueFallido = Entidades.Despliegue.RegistrarFallido(
                 solicitud.UsuarioAplicacion, solicitud.UsuarioWindows, solicitud.Equipo,
-                solicitud.Goc.Numero, solicitud.Goc.RamaBitbucket, solicitud.Ambiente.Nombre,
+                solicitud.Referencia.Etiqueta, solicitud.Referencia.Rama, solicitud.Ambiente.Nombre,
                 solicitud.Sistemas.Select(s => s.Codigo), tiempoCompilacion, tiempoDespliegue, error);
 
             _historial.Registrar(despliegueFallido);
-            _logger.Error($"Despliegue fallido: GOC={solicitud.Goc.Numero}. Motivo: {error}");
+            _logger.Error($"Despliegue fallido: referencia={solicitud.Referencia.Etiqueta}. Motivo: {error}");
             return Result.Fail(error);
         }
 

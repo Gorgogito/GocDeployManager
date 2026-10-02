@@ -141,13 +141,21 @@
                         BorderThickness="0,0,0,1"
                         Padding="14,9">
                     <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="GOC" VerticalAlignment="Center" Margin="0,0,6,0"
+                        <TextBlock Text="Desplegar" VerticalAlignment="Center" Margin="0,0,6,0"
                                    Foreground="{DynamicResource MaterialDesignBodyLight}"
                                    FontSize="12"/>
+                        <ComboBox x:Name="comboTipoDespliegue" Width="120" Margin="0,0,10,0"
+                                  VerticalAlignment="Center" SelectedIndex="0">
+                            <ComboBoxItem Content="GOC"/>
+                            <ComboBoxItem Content="Rama estándar"/>
+                            <ComboBoxItem Content="Otra rama"/>
+                        </ComboBox>
                         <TextBox x:Name="txtGoc" Width="130" Margin="0,0,16,0"
                                  materialDesign:HintAssist.Hint="GOC-00000"
                                  Style="{StaticResource MaterialDesignTextBox}"
                                  VerticalAlignment="Center"/>
+                        <ComboBox x:Name="comboRama" Width="160" Margin="0,0,16,0"
+                                  VerticalAlignment="Center" Visibility="Collapsed"/>
                         <TextBlock Text="Ambiente" VerticalAlignment="Center" Margin="0,0,6,0"
                                    Foreground="{DynamicResource MaterialDesignBodyLight}"
                                    FontSize="12"/>

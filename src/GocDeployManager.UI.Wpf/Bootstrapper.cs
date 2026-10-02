@@ -5,6 +5,7 @@ using GocDeployManager.Application.Ambientes;
 using GocDeployManager.Application.Auth;
 using GocDeployManager.Application.Deploy;
 using GocDeployManager.Application.Historial;
+using GocDeployManager.Application.Ramas;
 using GocDeployManager.Application.Sistemas;
 using GocDeployManager.Application.Usuarios;
 using GocDeployManager.Domain.Abstractions;
@@ -30,6 +31,7 @@ namespace GocDeployManager.UI
         public AmbienteManagementService Ambientes { get; }
         public SistemaManagementService Sistemas { get; }
         public HistorialQueryService Historial { get; }
+        public RamaManagementService Ramas { get; }
         public DeploymentOrchestrator Orquestador { get; }
         public IAppLogger Logger { get; }
 
@@ -62,6 +64,7 @@ namespace GocDeployManager.UI
             var historialRepo = new SqlServerDeployHistoryRepository(CadenaConexionSqlServer);
             var ambienteRepo = new SqlServerAmbienteRepository(CadenaConexionSqlServer);
             var sistemaRepo = new SqlServerSistemaRepository(CadenaConexionSqlServer);
+            var ramaRepo = new SqlServerRamaRepository(CadenaConexionSqlServer);
             var exclusionRepo = new JsonExclusionRulesRepository(Path.Combine(RutaConfiguracion, "ExclusionRules.json"));
 
             var hasher = new Pbkdf2PasswordHasher();
@@ -76,6 +79,7 @@ namespace GocDeployManager.UI
             Ambientes = new AmbienteManagementService(ambienteRepo);
             Sistemas = new SistemaManagementService(sistemaRepo);
             Historial = new HistorialQueryService(historialRepo);
+            Ramas = new RamaManagementService(ramaRepo);
             Orquestador = new DeploymentOrchestrator(git, msbuild, deployer, sistemaRepo, exclusionRepo, historialRepo, Logger);
         }
 

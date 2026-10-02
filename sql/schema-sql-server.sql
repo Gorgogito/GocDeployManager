@@ -97,3 +97,17 @@ BEGIN
     );
 END
 GO
+
+-- Ramas estándar (master, develop...) que se ofrecen en la pantalla principal.
+-- Opcional: si no existe, la aplicación la crea sola al usar la pestaña
+-- "Ramas" (requiere permiso de CREATE TABLE); aquí se deja para quien prefiera
+-- que la cree el DBA.
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'RamaConfigurada')
+BEGIN
+    CREATE TABLE RamaConfigurada (
+        Orden   INT             NOT NULL PRIMARY KEY,
+        Nombre  NVARCHAR(200)   NOT NULL UNIQUE
+    );
+    INSERT INTO RamaConfigurada (Orden, Nombre) VALUES (1, 'master'), (2, 'develop');
+END
+GO

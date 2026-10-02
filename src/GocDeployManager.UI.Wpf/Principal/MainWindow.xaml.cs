@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using GocDeployManager.Application.Auth;
 using GocDeployManager.Application.Deploy;
+using GocDeployManager.Common;
 using GocDeployManager.Domain.Entities;
 using GocDeployManager.UI.Configuracion;
 using GocDeployManager.UI.Historial;
@@ -80,6 +81,10 @@ namespace GocDeployManager.UI.Principal
             lstSideMenu.SelectedIndex = 0;
             lstSideMenu.SelectionChanged += LstSideMenu_SelectionChanged;
 
+            // Selector de tipo de despliegue (GOC / Rama estándar / Otra rama)
+            comboTipoDespliegue.SelectionChanged += ComboTipoDespliegue_SelectionChanged;
+            CargarRamas();
+
             // Wiring del combo de ambiente (puede disparar ActualizarSistemas al cargar)
             comboAmbiente.SelectionChanged += ComboAmbiente_SelectionChanged;
             CargarAmbientes();
@@ -121,6 +126,62 @@ namespace GocDeployManager.UI.Principal
             }
         }
 
+        // ─── Tipo de despliegue (GOC / rama estándar / otra rama) ─────────
+
+        private const int TipoRamaEstandar = 1;
+        private const int TipoOtraRama = 2;
+
+        private void CargarRamas()
+        {
+            try
+            {
+                var seleccionada = comboRama.SelectedItem as string;
+                comboRama.ItemsSource = _bootstrapper.Ramas.ObtenerTodas();
+                comboRama.SelectedItem = seleccionada;
+                if (comboRama.SelectedItem == null && comboRama.Items.Count > 0)
+                    comboRama.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                comboRama.ItemsSource = null;
+                MostrarError($"No se pudieron cargar las ramas estándar: {ex.Message}");
+            }
+        }
+
+        private void ComboTipoDespliegue_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var tipo = comboTipoDespliegue.SelectedIndex;
+            var usaTexto = tipo != TipoRamaEstandar;
+
+            txtGoc.Visibility = usaTexto ? Visibility.Visible : Visibility.Collapsed;
+            comboRama.Visibility = usaTexto ? Visibility.Collapsed : Visibility.Visible;
+            txtGoc.Text = string.Empty;
+            HintAssist.SetHint(txtGoc, tipo == TipoOtraRama ? "feature/mi-rama" : "GOC-00000");
+            txtGoc.Width = tipo == TipoOtraRama ? 220 : 130;
+            MostrarError(string.Empty);
+        }
+
+        private Result<ReferenciaDespliegue> ObtenerReferenciaSeleccionada()
+        {
+            switch (comboTipoDespliegue.SelectedIndex)
+            {
+                case TipoRamaEstandar:
+                    var rama = comboRama.SelectedItem as string;
+                    return string.IsNullOrEmpty(rama)
+                        ? Result.Fail<ReferenciaDespliegue>("No hay una rama estándar seleccionada (el administrador las configura en Configuración › Ramas).")
+                        : ReferenciaDespliegue.DesdeRama(rama);
+
+                case TipoOtraRama:
+                    return ReferenciaDespliegue.DesdeRama(txtGoc.Text);
+
+                default:
+                    var goc = Goc.Crear(txtGoc.Text);
+                    return goc.IsFailure
+                        ? Result.Fail<ReferenciaDespliegue>(goc.Error)
+                        : Result.Ok(ReferenciaDespliegue.DesdeGoc(goc.Value));
+            }
+        }
+
         // ─── Navegación lateral ───────────────────────────────────────────
 
         private void LstSideMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -145,6 +206,7 @@ namespace GocDeployManager.UI.Principal
                 }
                 new ConfiguracionWindow(_bootstrapper).ShowDialog();
                 CargarAmbientes();
+                CargarRamas();
                 return;
             }
 
@@ -169,10 +231,10 @@ namespace GocDeployManager.UI.Principal
         {
             MostrarError(string.Empty);
 
-            var resultadoGoc = Goc.Crear(txtGoc.Text);
-            if (resultadoGoc.IsFailure)
+            var resultadoReferencia = ObtenerReferenciaSeleccionada();
+            if (resultadoReferencia.IsFailure)
             {
-                MostrarError(resultadoGoc.Error);
+                MostrarError(resultadoReferencia.Error);
                 return;
             }
 
@@ -201,7 +263,7 @@ namespace GocDeployManager.UI.Principal
             }
 
             var solicitud = new SolicitudDespliegue(
-                resultadoGoc.Value,
+                resultadoReferencia.Value,
                 ambiente,
                 sistemasSeleccionados,
                 _sesion.Usuario.NombreUsuario,
@@ -240,7 +302,7 @@ namespace GocDeployManager.UI.Principal
             {
                 lblStatusIzquierda.Text = "Despliegue exitoso.";
                 snackbar.MessageQueue.Enqueue(
-                    $"{solicitud.Goc.Numero} desplegado en {solicitud.Ambiente.Nombre} exitosamente.");
+                    $"{solicitud.Referencia.Etiqueta} desplegado en {solicitud.Ambiente.Nombre} exitosamente.");
             }
             else
             {
@@ -323,6 +385,8 @@ namespace GocDeployManager.UI.Principal
         {
             btnIniciarDespliegue.IsEnabled = !activo && _sesion.Usuario.PuedeDesplegar;
             txtGoc.IsEnabled              = !activo;
+            comboTipoDespliegue.IsEnabled = !activo;
+            comboRama.IsEnabled           = !activo;
             comboAmbiente.IsEnabled       = !activo;
             foreach (var chk in _checkboxesSistema)
                 chk.IsEnabled = !activo;

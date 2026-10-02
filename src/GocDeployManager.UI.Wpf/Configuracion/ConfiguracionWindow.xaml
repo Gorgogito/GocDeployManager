@@ -440,6 +440,65 @@
                 </Grid>
             </TabItem>
 
+            <!-- ══ TAB: RAMAS ESTÁNDAR ══ -->
+            <TabItem Header="Ramas" x:Name="tabRamas">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="52"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Margin="16,12,16,8" TextWrapping="Wrap" FontSize="12"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}"
+                               Text="Ramas estándar que aparecen en la pantalla principal al elegir «Rama estándar» (por ejemplo master, develop). Escribe el nombre exacto de la rama en Bitbucket."/>
+
+                    <DataGrid Grid.Row="1" x:Name="gridRamas"
+                              Margin="16,0,16,8"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              CanUserResizeRows="False"
+                              CanUserSortColumns="False"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              materialDesign:DataGridAssist.ColumnHeaderPadding="8,6,8,6">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nombre de la rama" Width="*"
+                                Binding="{Binding Nombre, UpdateSourceTrigger=LostFocus}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="2"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="0,1,0,0"
+                            Padding="12,8">
+                        <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                <Button Content="AGREGAR" Margin="0,0,8,0"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Click="BtnAgregarRama_Click"/>
+                                <Button Content="ELIMINAR" Margin="0,0,8,0"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                        BorderBrush="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                        Click="BtnEliminarRama_Click"/>
+                                <Button Content="GUARDAR"
+                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Click="BtnGuardarRamas_Click"/>
+                            </StackPanel>
+                            <TextBlock x:Name="lblErrorRamas"
+                                       Foreground="{DynamicResource MaterialDesignValidationErrorBrush}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       FontSize="12"
+                                       Margin="12,0,0,0"
+                                       Visibility="Collapsed"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
             <!-- ══ TAB 4: GENERAL ══ -->
             <TabItem Header="General" x:Name="tabGeneral">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">

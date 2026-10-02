@@ -25,6 +25,9 @@ namespace GocDeployManager.UI.Configuracion
         private readonly ObservableCollection<PasoDeBuildEditable> _sistemasPasos =
             new ObservableCollection<PasoDeBuildEditable>();
 
+        private readonly ObservableCollection<RamaEditable> _ramasEditables =
+            new ObservableCollection<RamaEditable>();
+
         // Snackbar
         private SnackbarMessageQueue _snackbarQueue;
 
@@ -68,6 +71,7 @@ namespace GocDeployManager.UI.Configuracion
             // Conectar colecciones ObservableCollection a los DataGrids de sub-edición
             gridAmbienteSistemas.ItemsSource = _ambienteSistemas;
             gridSistemasPasos.ItemsSource = _sistemasPasos;
+            gridRamas.ItemsSource = _ramasEditables;
 
             // Poblar el ComboBox de rol de usuarios
             foreach (RolUsuario rol in Enum.GetValues(typeof(RolUsuario)))
@@ -77,12 +81,88 @@ namespace GocDeployManager.UI.Configuracion
             CargarAmbientes();
             CargarSistemas();
             CargarUsuarios();
+            CargarRamas();
             CargarRutasGenerales();
         }
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // No requiere acción — los datos se cargan en Loaded
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // TAB: RAMAS ESTÁNDAR
+        // ═══════════════════════════════════════════════════════════════════
+
+        private void CargarRamas()
+        {
+            _ramasEditables.Clear();
+            try
+            {
+                foreach (var rama in _bootstrapper.Ramas.ObtenerTodas())
+                    _ramasEditables.Add(new RamaEditable { Nombre = rama });
+            }
+            catch (Exception ex)
+            {
+                MostrarErrorRamas(ex.Message);
+            }
+        }
+
+        private void BtnAgregarRama_Click(object sender, RoutedEventArgs e)
+        {
+            MostrarErrorRamas(string.Empty);
+            var nueva = new RamaEditable();
+            _ramasEditables.Add(nueva);
+            gridRamas.SelectedItem = nueva;
+            gridRamas.ScrollIntoView(nueva);
+            gridRamas.CurrentCell = new DataGridCellInfo(nueva, gridRamas.Columns[0]);
+            gridRamas.BeginEdit();
+        }
+
+        private void BtnEliminarRama_Click(object sender, RoutedEventArgs e)
+        {
+            MostrarErrorRamas(string.Empty);
+            var seleccionada = gridRamas.SelectedItem as RamaEditable;
+            if (seleccionada == null)
+            {
+                MostrarErrorRamas("Selecciona una rama de la lista para eliminar.");
+                return;
+            }
+
+            gridRamas.CommitEdit(DataGridEditingUnit.Row, true);
+            _ramasEditables.Remove(seleccionada);
+        }
+
+        private void BtnGuardarRamas_Click(object sender, RoutedEventArgs e)
+        {
+            MostrarErrorRamas(string.Empty);
+            gridRamas.CommitEdit(DataGridEditingUnit.Row, true);
+
+            Common.Result resultado;
+            try
+            {
+                resultado = _bootstrapper.Ramas.Guardar(_ramasEditables.Select(r => r.Nombre).ToList());
+            }
+            catch (Exception ex)
+            {
+                MostrarErrorRamas(ex.Message);
+                return;
+            }
+
+            if (resultado.IsFailure)
+            {
+                MostrarErrorRamas(resultado.Error);
+                return;
+            }
+
+            CargarRamas();
+            _snackbarQueue?.Enqueue("Ramas estándar guardadas correctamente.");
+        }
+
+        private void MostrarErrorRamas(string mensaje)
+        {
+            lblErrorRamas.Text = mensaje;
+            lblErrorRamas.Visibility = string.IsNullOrEmpty(mensaje) ? Visibility.Collapsed : Visibility.Visible;
         }
 
         // ═══════════════════════════════════════════════════════════════════

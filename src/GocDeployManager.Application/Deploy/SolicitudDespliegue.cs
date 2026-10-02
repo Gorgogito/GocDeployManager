@@ -11,7 +11,7 @@ namespace GocDeployManager.Application.Deploy
     /// </summary>
     public sealed class SolicitudDespliegue
     {
-        public Goc Goc { get; }
+        public ReferenciaDespliegue Referencia { get; }
         public Ambiente Ambiente { get; }
         public IReadOnlyList<Sistema> Sistemas { get; }
         public string UsuarioAplicacion { get; }
@@ -22,7 +22,7 @@ namespace GocDeployManager.Application.Deploy
         public string RutaClonadoBase { get; }
 
         public SolicitudDespliegue(
-            Goc goc,
+            ReferenciaDespliegue referencia,
             Ambiente ambiente,
             IEnumerable<Sistema> sistemas,
             string usuarioAplicacion,
@@ -32,7 +32,7 @@ namespace GocDeployManager.Application.Deploy
             string contrasenaBitbucket,
             string rutaClonadoBase)
         {
-            Goc = Guard.ContraNulo(goc, nameof(goc));
+            Referencia = Guard.ContraNulo(referencia, nameof(referencia));
             Ambiente = Guard.ContraNulo(ambiente, nameof(ambiente));
 
             var listaSistemas = Guard.ContraNulo(sistemas, nameof(sistemas)).ToList();
